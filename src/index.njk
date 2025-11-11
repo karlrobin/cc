@@ -1,0 +1,61 @@
+---
+layout: base.njk
+title: "Photo Blog - Home"
+---
+
+<div class="hero">
+    <h2>Welcome to the Photo Blog</h2>
+    <p>Explore our collection of photo albums from various adventures and moments.</p>
+</div>
+
+{# Show public albums for everyone #}
+<section class="section-header">
+    <h2>Public Albums</h2>
+</section>
+
+<div class="albums-grid">
+    {% for album in collections.publicAlbums %}
+    <a href="{{ album.url }}" class="album-card">
+        <img src="{{ album.data.photos[0].url }}" alt="{{ album.data.title }}" class="album-card-image">
+        <div class="album-card-content">
+            <div class="album-card-header">
+                <h3>{{ album.data.title }}</h3>
+                <span class="badge public">Public</span>
+            </div>
+            <p class="album-card-date">{{ album.date | date: "%B %d, %Y" }}</p>
+            <p class="album-card-excerpt">{{ album.data.photos.length }} photos</p>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{# Show private albums section based on authentication #}
+{% if collections.privateAlbums.length > 0 %}
+<section class="section-header">
+    <h2>Members Only Albums</h2>
+</section>
+
+{% if eleventy.edge.cookies.authenticated %}
+    {# User is authenticated, show private albums #}
+    <div class="albums-grid">
+        {% for album in collections.privateAlbums %}
+        <a href="{{ album.url }}" class="album-card">
+            <img src="{{ album.data.photos[0].url }}" alt="{{ album.data.title }}" class="album-card-image">
+            <div class="album-card-content">
+                <div class="album-card-header">
+                    <h3>{{ album.data.title }}</h3>
+                    <span class="badge private">Members Only</span>
+                </div>
+                <p class="album-card-date">{{ album.date | date: "%B %d, %Y" }}</p>
+                <p class="album-card-excerpt">{{ album.data.photos.length }} photos</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+{% else %}
+    {# User is not authenticated, show login prompt #}
+    <div class="message">
+        <p>🔒 There are {{ collections.privateAlbums.length }} members-only albums. <a href="/login">Login</a> to view them.</p>
+    </div>
+{% endif %}
+{% endif %}

@@ -1,0 +1,19 @@
+{
+  "name": "eleventy-photo-blog",
+  "version": "1.0.0",
+  "description": "An Eleventy photo blog with authentication using Eleventy Edge",
+  "scripts": {
+    "start": "npx @11ty/eleventy --serve",
+    "build": "npx @11ty/eleventy",
+    "clean": "rm -rf _site"
+  },
+  "keywords": ["eleventy", "photo-blog", "authentication"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  },
+  "dependencies": {
+    "@11ty/eleventy-plugin-edge": "^2.0.0"
+  }
+}

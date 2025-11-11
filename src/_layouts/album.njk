@@ -1,0 +1,34 @@
+---
+layout: base.njk
+---
+
+<article class="album">
+    <div class="album-header">
+        <h2>{{ title }}</h2>
+        {% if private %}
+        <span class="badge private">Members Only</span>
+        {% else %}
+        <span class="badge public">Public</span>
+        {% endif %}
+        <p class="album-date">{{ date | date: "%B %d, %Y" }}</p>
+    </div>
+
+    <div class="album-description">
+        {{ content | safe }}
+    </div>
+
+    <div class="photo-grid">
+        {% for photo in photos %}
+        <div class="photo-item">
+            <img src="{{ photo.url }}" alt="{{ photo.caption or title }}">
+            {% if photo.caption %}
+            <p class="photo-caption">{{ photo.caption }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="album-footer">
+        <a href="/" class="back-link">← Back to albums</a>
+    </div>
+</article>
