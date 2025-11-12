@@ -2,27 +2,31 @@
 
 A modern photo blog built with [Eleventy](https://www.11ty.dev/) featuring public and private photo albums with authentication using the [Eleventy Edge plugin](https://www.11ty.dev/docs/plugins/edge/).
 
-## ⚠️ CRITICAL SECURITY WARNING
+## 📚 Demo Project Notice
 
-**DO NOT USE THIS CODE IN PRODUCTION WITHOUT ADDRESSING SECURITY VULNERABILITIES!**
+This is a **demonstration/learning project** that uses **simplified client-side authentication** to show Eleventy concepts without requiring backend infrastructure.
 
-This is a **DEMONSTRATION/EXAMPLE PROJECT** with **CRITICAL SECURITY FLAWS** that make the authentication completely ineffective. The "private" albums can be accessed by anyone without authentication.
+### Important: Demo vs Production
 
-### Known Vulnerabilities:
-- ❌ Client-side authentication (password visible in source code)
-- ❌ Trivial cookie bypass (anyone can set `authenticated=true` cookie)
-- ❌ Static content generation (private HTML files exist in build)
-- ❌ No cryptographic session management
-- ❌ Hardcoded credentials in JavaScript
+**This demo intentionally uses client-side authentication for simplicity.** While it demonstrates the UI/UX flow of authentication, it is not secure for actual private content because:
 
-**See `SECURITY_VULNERABILITIES.md` for complete details and `EXPLOIT_DEMO.html` for live demonstrations.**
+- 🔍 Authentication logic runs in the browser (visible in page source)
+- 🍪 Authentication cookie can be set manually by anyone
+- 📁 Private content exists in static build files
+- 🔑 No cryptographic session management
 
-This project is suitable for:
-- ✅ Learning Eleventy basics
-- ✅ Understanding authentication concepts
-- ✅ Security research and education
-- ❌ Production use with actual private content
-- ❌ Any scenario requiring real security
+**For production use with real private content**, see the "Authentication → For Production" section below for proper implementation guidance.
+
+### Best Use Cases
+
+This project is ideal for:
+- ✅ Learning Eleventy static site generation
+- ✅ Understanding authentication UI/UX patterns
+- ✅ Starting point for projects with proper auth
+- ✅ Educational/demo purposes
+- ❌ Production use with actual private content (without proper auth)
+
+**See `SECURITY_VULNERABILITIES.md` for detailed analysis of why the simplified approach isn't production-ready.**
 
 ## Features
 
