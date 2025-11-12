@@ -2,6 +2,28 @@
 
 A modern photo blog built with [Eleventy](https://www.11ty.dev/) featuring public and private photo albums with authentication using the [Eleventy Edge plugin](https://www.11ty.dev/docs/plugins/edge/).
 
+## ⚠️ CRITICAL SECURITY WARNING
+
+**DO NOT USE THIS CODE IN PRODUCTION WITHOUT ADDRESSING SECURITY VULNERABILITIES!**
+
+This is a **DEMONSTRATION/EXAMPLE PROJECT** with **CRITICAL SECURITY FLAWS** that make the authentication completely ineffective. The "private" albums can be accessed by anyone without authentication.
+
+### Known Vulnerabilities:
+- ❌ Client-side authentication (password visible in source code)
+- ❌ Trivial cookie bypass (anyone can set `authenticated=true` cookie)
+- ❌ Static content generation (private HTML files exist in build)
+- ❌ No cryptographic session management
+- ❌ Hardcoded credentials in JavaScript
+
+**See `SECURITY_VULNERABILITIES.md` for complete details and `EXPLOIT_DEMO.html` for live demonstrations.**
+
+This project is suitable for:
+- ✅ Learning Eleventy basics
+- ✅ Understanding authentication concepts
+- ✅ Security research and education
+- ❌ Production use with actual private content
+- ❌ Any scenario requiring real security
+
 ## Features
 
 - 📸 Photo album management with multiple photos per album
