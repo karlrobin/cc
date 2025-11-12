@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSession } from '../lib/auth';
+
+const { user, membership } = await getSession(Astro.cookies);
+const isApproved = membership?.status === 'approved';
+
+// Sample albums data - in production, this would come from a CMS or database
+const albums = [
+  {
+    id: 'summer-2024',
+    title: 'Summer Adventures 2024',
+    date: '2024-08-15',
+    description: 'Our amazing summer vacation in the mountains',
+    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
+    photoCount: 4
+  },
+  {
+    id: 'autumn-colors',
+    title: 'Autumn Colors',
+    date: '2024-10-20',
+    description: 'Beautiful fall foliage and cozy moments',
+    coverImage: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop',
+    photoCount: 6
+  },
+  {
+    id: 'city-nights',
+    title: 'City Nights',
+    date: '2024-09-05',
+    description: 'Urban exploration after dark',
+    coverImage: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop',
+    photoCount: 5
+  }
+];
+---
+
+<Layout title="Photo Albums" user={user} membership={membership}>
+  {!isApproved ? (
+    <div class="message info" style="max-width: 600px; margin: 2rem auto;">
+      {!user ? (
+        <div>
+          <h3 style="margin-bottom: 0.5rem;">Welcome!</h3>
+          <p>This is a private photo blog. Please <a href="/signin">sign in</a> or <a href="/request-access">request access</a> to view our albums.</p>
+        </div>
+      ) : membership?.status === 'pending' ? (
+        <div>
+          <h3 style="margin-bottom: 0.5rem;">Membership Pending</h3>
+          <p>Thanks for requesting access! Your membership request is being reviewed. We'll email you once it's approved.</p>
+        </div>
+      ) : (
+        <div>
+          <h3 style="margin-bottom: 0.5rem;">Request Membership</h3>
+          <p>You need to <a href="/request-access">request membership</a> to view our private photo albums.</p>
+        </div>
+      )}
+    </div>
+  ) : (
+    <>
+      <h2 style="margin: 2rem 0 1rem 0;">Photo Albums</h2>
+      <div class="albums-grid">
+        {albums.map(album => (
+          <a href={`/albums/${album.id}`} class="album-card">
+            <img src={album.coverImage} alt={album.title} class="album-card-image" />
+            <div class="album-card-content">
+              <h3>{album.title}</h3>
+              <p class="album-card-date">{new Date(album.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p class="album-card-description">{album.description}</p>
+              <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
+                {album.photoCount} photos
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+</Layout>

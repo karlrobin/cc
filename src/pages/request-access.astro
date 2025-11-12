@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSession } from '../lib/auth';
+
+const { user, membership } = await getSession(Astro.cookies);
+
+const success = Astro.url.searchParams.get('success');
+const error = Astro.url.searchParams.get('error');
+---
+
+<Layout title="Request Access" user={user} membership={membership}>
+  <div class="auth-form">
+    <h2>Request Membership</h2>
+
+    {success && (
+      <div class="message success">
+        <p>Your membership request has been submitted! We'll review it and send you an email once approved.</p>
+      </div>
+    )}
+
+    {error === 'already_requested' && (
+      <div class="message info">
+        <p>You've already requested membership. We'll notify you once it's reviewed.</p>
+      </div>
+    )}
+
+    {!user ? (
+      <>
+        <p style="margin-bottom: 1.5rem; color: #666;">
+          To request access to our private photo albums, please sign in first.
+        </p>
+        <a href="/signin" class="btn">Sign In to Request Access</a>
+      </>
+    ) : membership?.status === 'pending' ? (
+      <div class="message info">
+        <p>Your membership request is pending review. We'll send you an email once it's approved!</p>
+      </div>
+    ) : membership?.status === 'approved' ? (
+      <div class="message success">
+        <p>You're already an approved member! <a href="/">View albums</a></p>
+      </div>
+    ) : (
+      <>
+        <p style="margin-bottom: 1.5rem; color: #666;">
+          Tell us a bit about yourself and why you'd like to join our photo community.
+        </p>
+
+        <form method="POST" action="/api/membership/request">
+          <div class="form-group">
+            <label for="message">Message (optional)</label>
+            <textarea
+              id="message"
+              name="message"
+              placeholder="I'd like to join because..."
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn">Submit Request</button>
+        </form>
+      </>
+    )}
+  </div>
+</Layout>

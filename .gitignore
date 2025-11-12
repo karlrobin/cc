@@ -1,30 +1,28 @@
-# Dependencies
+# build output
+dist/
+.output/
+
+# dependencies
 node_modules/
 
-# Build output
-_site/
-
-# Eleventy cache
-.cache/
-
-# Environment variables
-.env
-.env.local
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
+# logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Netlify
-.netlify/
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# vscode setting folder
+.vscode/
+
+# Astro
+.astro/

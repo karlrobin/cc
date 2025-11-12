@@ -1,0 +1,129 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSession } from '../../lib/auth';
+
+const { user, membership } = await getSession(Astro.cookies);
+const isApproved = membership?.status === 'approved';
+
+if (!isApproved) {
+  return Astro.redirect('/');
+}
+
+const { id } = Astro.params;
+
+// Sample albums data - in production, this would come from a CMS or database
+const albums: Record<string, any> = {
+  'summer-2024': {
+    title: 'Summer Adventures 2024',
+    date: '2024-08-15',
+    description: 'Our amazing summer vacation in the mountains. We spent two weeks hiking, camping, and enjoying the breathtaking views.',
+    photos: [
+      {
+        url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+        caption: 'Mountain views at sunrise'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800',
+        caption: 'Lakeside camp'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800',
+        caption: 'Camping under the stars'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800',
+        caption: 'Sunset over the valley'
+      }
+    ]
+  },
+  'autumn-colors': {
+    title: 'Autumn Colors',
+    date: '2024-10-20',
+    description: 'Peaceful walks through nature capturing the beauty of fall.',
+    photos: [
+      {
+        url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800',
+        caption: 'Forest trail'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
+        caption: 'Misty morning'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1511497584788-876760111969?w=800',
+        caption: 'Wildflowers'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800',
+        caption: 'Mountain peak'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800',
+        caption: 'Golden hour'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1445264718909-5a24a0a7e060?w=800',
+        caption: 'Autumn leaves'
+      }
+    ]
+  },
+  'city-nights': {
+    title: 'City Nights',
+    date: '2024-09-05',
+    description: 'A weekend exploring the city after dark - from modern architecture to historic neighborhoods.',
+    photos: [
+      {
+        url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+        caption: 'Downtown architecture'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800',
+        caption: 'Cafe culture'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800',
+        caption: 'City lights at night'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800',
+        caption: 'Historic district'
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800',
+        caption: 'Street art discovery'
+      }
+    ]
+  }
+};
+
+const album = albums[id!];
+
+if (!album) {
+  return Astro.redirect('/');
+}
+---
+
+<Layout title={album.title} user={user} membership={membership}>
+  <div class="album-header">
+    <h2>{album.title}</h2>
+    <p class="album-date">
+      {new Date(album.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+    </p>
+    <p class="album-description">{album.description}</p>
+  </div>
+
+  <div class="photo-grid">
+    {album.photos.map((photo: any) => (
+      <div class="photo-item">
+        <img src={photo.url} alt={photo.caption} />
+        {photo.caption && (
+          <p class="photo-caption">{photo.caption}</p>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <div style="margin-top: 2rem;">
+    <a href="/" style="color: #666; text-decoration: none;">← Back to albums</a>
+  </div>
+</Layout>

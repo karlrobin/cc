@@ -1,0 +1,54 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSession } from '../lib/auth';
+
+const { user } = await getSession(Astro.cookies);
+
+if (user) {
+  return Astro.redirect('/');
+}
+
+const sent = Astro.url.searchParams.get('sent');
+const error = Astro.url.searchParams.get('error');
+---
+
+<Layout title="Sign In">
+  <div class="auth-form">
+    <h2>Sign In with Magic Link</h2>
+
+    {sent && (
+      <div class="message success">
+        <p>Check your email! We've sent you a magic link to sign in.</p>
+      </div>
+    )}
+
+    {error === 'invalid_link' && (
+      <div class="message error">
+        <p>Invalid or expired link. Please request a new one.</p>
+      </div>
+    )}
+
+    <p style="margin-bottom: 1.5rem; color: #666;">
+      Enter your email address and we'll send you a magic link to sign in. No password needed!
+    </p>
+
+    <form method="POST" action="/api/auth/signin">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          placeholder="your@email.com"
+        />
+      </div>
+
+      <button type="submit" class="btn">Send Magic Link</button>
+    </form>
+
+    <p style="margin-top: 1.5rem; text-align: center; color: #666;">
+      Don't have access? <a href="/request-access">Request membership</a>
+    </p>
+  </div>
+</Layout>

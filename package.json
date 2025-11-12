@@ -1,19 +1,22 @@
 {
-  "name": "eleventy-photo-blog",
+  "name": "astro-photo-blog",
+  "type": "module",
   "version": "1.0.0",
-  "description": "An Eleventy photo blog with authentication using Eleventy Edge",
+  "description": "Private photo blog with Astro and Supabase Auth",
   "scripts": {
-    "start": "npx @11ty/eleventy --serve",
-    "build": "npx @11ty/eleventy",
-    "clean": "rm -rf _site"
-  },
-  "keywords": ["eleventy", "photo-blog", "authentication"],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@11ty/eleventy": "^2.0.1"
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
-    "@11ty/eleventy-plugin-edge": "^2.0.0"
+    "@astrojs/node": "^8.3.4",
+    "@supabase/supabase-js": "^2.39.3",
+    "astro": "^4.16.18"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.6.3"
   }
 }

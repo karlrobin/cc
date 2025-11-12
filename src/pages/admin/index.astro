@@ -1,0 +1,127 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSession } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
+
+const { user, membership } = await getSession(Astro.cookies);
+const isAdmin = membership?.role === 'admin' && membership?.status === 'approved';
+
+if (!isAdmin) {
+  return Astro.redirect('/');
+}
+
+// Fetch pending membership requests
+const { data: pendingRequests } = await supabase
+  .from('memberships')
+  .select('*')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: false });
+
+// Fetch recent approved members
+const { data: approvedMembers } = await supabase
+  .from('memberships')
+  .select('*')
+  .eq('status', 'approved')
+  .order('approved_at', { ascending: false })
+  .limit(10);
+
+const success = Astro.url.searchParams.get('success');
+---
+
+<Layout title="Admin Dashboard" user={user} membership={membership}>
+  <h2>Admin Dashboard</h2>
+
+  {success === 'approved' && (
+    <div class="message success">
+      <p>Membership approved successfully!</p>
+    </div>
+  )}
+
+  {success === 'rejected' && (
+    <div class="message info">
+      <p>Membership request rejected.</p>
+    </div>
+  )}
+
+  <div style="margin: 2rem 0;">
+    <h3 style="margin-bottom: 1rem;">Pending Membership Requests ({pendingRequests?.length || 0})</h3>
+
+    {!pendingRequests || pendingRequests.length === 0 ? (
+      <p style="color: #666;">No pending requests.</p>
+    ) : (
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {pendingRequests.map((request: any) => (
+          <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+              <div style="flex: 1;">
+                <p style="font-weight: 600; margin-bottom: 0.5rem;">{request.email}</p>
+                {request.request_message && (
+                  <p style="color: #666; margin-bottom: 0.5rem;">"{request.request_message}"</p>
+                )}
+                <p style="color: #999; font-size: 0.875rem;">
+                  Requested {new Date(request.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <form method="POST" action="/api/admin/approve-membership">
+                  <input type="hidden" name="membership_id" value={request.id} />
+                  <button type="submit" class="btn" style="background: #2e7d32; width: auto; padding: 0.5rem 1rem;">
+                    Approve
+                  </button>
+                </form>
+                <form method="POST" action="/api/admin/reject-membership">
+                  <input type="hidden" name="membership_id" value={request.id} />
+                  <button type="submit" class="btn" style="background: #c62828; width: auto; padding: 0.5rem 1rem;">
+                    Reject
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div style="margin: 2rem 0;">
+    <h3 style="margin-bottom: 1rem;">Recent Members</h3>
+
+    {!approvedMembers || approvedMembers.length === 0 ? (
+      <p style="color: #666;">No approved members yet.</p>
+    ) : (
+      <div style="display: grid; gap: 1rem;">
+        {approvedMembers.map((member: any) => (
+          <div style="background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p style="font-weight: 600;">{member.email}</p>
+              <p style="color: #999; font-size: 0.875rem;">
+                {member.role === 'admin' ? '👑 Admin' : '👤 Member'} •
+                Approved {new Date(member.approved_at).toLocaleDateString()}
+              </p>
+            </div>
+            <span class="badge approved">Active</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div style="margin: 3rem 0; padding: 2rem; background: #f5f5f5; border-radius: 8px;">
+    <h3 style="margin-bottom: 1rem;">Send Invitation</h3>
+    <p style="color: #666; margin-bottom: 1rem;">
+      Send an invitation email to pre-approve someone for membership.
+    </p>
+    <form method="POST" action="/api/admin/send-invitation" style="display: flex; gap: 1rem;">
+      <input
+        type="email"
+        name="email"
+        placeholder="email@example.com"
+        required
+        style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;"
+      />
+      <button type="submit" class="btn" style="width: auto; padding: 0.75rem 1.5rem;">
+        Send Invitation
+      </button>
+    </form>
+  </div>
+</Layout>

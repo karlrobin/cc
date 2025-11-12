@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  user?: any;
+  membership?: any;
+}
+
+const { title, user, membership } = Astro.props;
+const isApproved = membership?.status === 'approved';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1><a href="/">📸 Photo Albums</a></h1>
+      <nav>
+        {user ? (
+          <>
+            <span class="user-email">{user.email}</span>
+            {isApproved ? (
+              <span class="badge approved">Member</span>
+            ) : membership?.status === 'pending' ? (
+              <span class="badge pending">Pending</span>
+            ) : (
+              <span class="badge">No Access</span>
+            )}
+            <a href="/api/auth/signout">Sign Out</a>
+          </>
+        ) : (
+          <>
+            <a href="/signin">Sign In</a>
+            <a href="/request-access">Request Access</a>
+          </>
+        )}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <slot />
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Photo Albums. Built with Astro & Supabase.</p>
+    </div>
+  </footer>
+</body>
+</html>
