@@ -1,6 +1,6 @@
-# Private Photo Blog with Astro & Supabase
+# Private Photo Blog with Astro, Supabase & Directus
 
-A beautiful, private photo blog built with Astro and Supabase Auth. Features passwordless magic link authentication, membership system, and long-lived sessions.
+A beautiful, private photo blog built with Astro, Supabase Auth, and Directus CMS. Features passwordless magic link authentication, membership system, and easy content management.
 
 ## Features
 
@@ -9,6 +9,7 @@ A beautiful, private photo blog built with Astro and Supabase Auth. Features pas
 - 🎟️ **Invitation System** - Admins can send invitation emails
 - ⏰ **Long-lived Sessions** - Stay signed in for up to 1 year
 - 📸 **Photo Albums** - Beautiful gallery layouts for photo collections
+- 🎨 **CMS Managed** - Directus CMS for easy content management
 - 🛡️ **Secure** - Supabase Auth + Row Level Security
 - ⚡ **Fast** - Server-rendered Astro with minimal JavaScript
 - 📱 **Responsive** - Works beautifully on all devices
@@ -17,7 +18,8 @@ A beautiful, private photo blog built with Astro and Supabase Auth. Features pas
 
 - **Framework**: Astro (SSR mode with Node adapter)
 - **Authentication**: Supabase Auth (magic links)
-- **Database**: Supabase PostgreSQL with RLS
+- **User Database**: Supabase PostgreSQL with RLS
+- **Content CMS**: Directus (albums & photos)
 - **Styling**: Vanilla CSS (no framework)
 - **Deployment**: Any Node.js host (Netlify, Vercel, Railway, etc.)
 
@@ -25,6 +27,7 @@ A beautiful, private photo blog built with Astro and Supabase Auth. Features pas
 
 - Node.js 18+
 - A Supabase account (free tier works great)
+- A Directus instance (Cloud or self-hosted)
 - An SMTP email service (Supabase provides one, or use your own)
 
 ## Quick Start
@@ -52,21 +55,48 @@ npm install
    - Go to **Project Settings** → **API**
    - Copy the `URL` and `anon` key
 
-### 3. Configure Environment Variables
+### 3. Set Up Directus CMS
+
+Directus manages your photo albums and content. You can use Directus Cloud or self-host.
+
+**Quick Setup (Directus Cloud):**
+1. Sign up at [directus.cloud](https://directus.cloud)
+2. Create a new project
+3. Note your project URL
+
+**Or Self-Host with Docker:**
+See `DIRECTUS_SETUP.md` for detailed instructions.
+
+**Create Collections:**
+See the complete guide in `DIRECTUS_SETUP.md` for:
+- Creating `albums` and `photos` collections
+- Setting up relationships
+- Configuring public access permissions
+- Adding your first album
+
+### 4. Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your Supabase credentials:
+Edit `.env` with your credentials:
 
 ```env
+# Supabase (for authentication)
 PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Directus (for content management)
+PUBLIC_DIRECTUS_URL=http://localhost:8055
+# Or for Directus Cloud:
+# PUBLIC_DIRECTUS_URL=https://your-project.directus.app
+
+# Application URL
 PUBLIC_APP_URL=http://localhost:4321
 ```
 
-### 4. Create Your First Admin
+### 5. Create Your First Admin
 
 After running the schema, sign in with your email through the app, then run this SQL in Supabase to make yourself an admin:
 
@@ -81,13 +111,15 @@ values (
 );
 ```
 
-### 5. Run Development Server
+### 6. Run Development Server
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:4321](http://localhost:4321)
+
+**Note**: Make sure both Supabase and Directus are properly configured before running the app. You need at least one published album in Directus to see content.
 
 ## How It Works
 
@@ -141,46 +173,86 @@ Only approved members can view albums.
 │   │           └── request.ts   # Submit membership request
 │   ├── lib/
 │   │   ├── supabase.ts          # Supabase client
+│   │   ├── directus.ts          # Directus CMS client
 │   │   └── auth.ts              # Auth helpers
 │   └── styles/
 │       └── global.css           # Global styles
 ├── astro.config.mjs             # Astro configuration
-├── supabase-schema.sql          # Database schema
+├── supabase-schema.sql          # Database schema (auth/memberships)
+├── DIRECTUS_SETUP.md            # Directus CMS setup guide
 └── package.json
 ```
 
 ## Managing Albums
 
-Currently, albums are hardcoded in the source files for maximum simplicity and performance. To add/edit albums:
+Albums are managed through **Directus CMS**, providing a beautiful admin interface for content management.
 
-### Option 1: Hardcoded (Current)
+### Adding a New Album
 
-Edit `src/pages/index.astro` and `src/pages/albums/[id].astro`:
+1. **Log in to Directus**
+   - Access your Directus admin panel
+   - Default: `http://localhost:8055` or your Directus Cloud URL
 
-```typescript
-const albums = [
-  {
-    id: 'my-album',
-    title: 'My Album',
-    date: '2024-11-12',
-    description: 'Description here',
-    coverImage: 'https://...',
-    photoCount: 5
-  }
-];
+2. **Create an Album**
+   - Go to **Content** → **Albums**
+   - Click **Create Item**
+   - Fill in:
+     - **Slug**: URL-friendly identifier (e.g., `summer-2024`)
+     - **Title**: Display name (e.g., `Summer Adventures 2024`)
+     - **Description**: Optional description
+     - **Status**: Set to `published` to make it visible
+     - **Date Published**: When to show this album
+     - **Cover Image**: Optional cover (uses first photo if not set)
+
+3. **Add Photos**
+   - Go to **Content** → **Photos**
+   - Click **Create Item**
+   - Upload image and select the album
+   - Add caption and sort order
+   - Repeat for all photos
+
+   Or use the relationship field in the album to add photos directly.
+
+4. **Publish**
+   - Make sure album status is `published`
+   - Photos will automatically be visible when album is published
+
+### Editing Albums
+
+1. Go to **Content** → **Albums** in Directus
+2. Click on the album you want to edit
+3. Make your changes
+4. Save
+5. Changes appear immediately on the website (no rebuild needed!)
+
+### Managing Photos
+
+- **Reorder**: Use the `sort` field (lower numbers appear first)
+- **Update**: Edit photo details or replace images
+- **Delete**: Remove photos from albums
+- **Bulk Upload**: Upload multiple photos at once
+
+### Image Management
+
+Directus provides built-in image transformations. Images are served from:
+```
+{DIRECTUS_URL}/assets/{file-id}
 ```
 
-### Option 2: CMS Integration
+You can add transformations:
+```
+{DIRECTUS_URL}/assets/{file-id}?width=800&quality=80
+```
 
-Integrate with a headless CMS:
-- [Contentful](https://www.contentful.com/)
-- [Sanity](https://www.sanity.io/)
-- [Strapi](https://strapi.io/)
-- Or add albums table to Supabase
+See `DIRECTUS_SETUP.md` for more details on image optimization.
 
-### Option 3: Markdown Files
+### Content Workflow
 
-Create album markdown files and use Astro's content collections. See [Astro Content Collections](https://docs.astro.build/en/guides/content-collections/).
+- **Draft**: Work on albums before publishing
+- **Published**: Visible to approved members
+- **Archived**: Hide old albums without deleting
+
+See the complete Directus setup guide in `DIRECTUS_SETUP.md`.
 
 ## Admin Features
 
@@ -250,9 +322,10 @@ All support Node.js apps. Set:
 ### Environment Variables
 
 Remember to set in production:
-- `PUBLIC_SUPABASE_URL`
-- `PUBLIC_SUPABASE_ANON_KEY`
-- `PUBLIC_APP_URL` (your production domain)
+- `PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `PUBLIC_DIRECTUS_URL` - Your Directus instance URL
+- `PUBLIC_APP_URL` - Your production domain (for magic links)
 
 ## Security Considerations
 
@@ -270,7 +343,9 @@ Remember to set in production:
 2. **Configure email rate limiting** in Supabase
 3. **Review RLS policies** for your use case
 4. **Set up monitoring** for suspicious activity
-5. **Regular backups** of your Supabase database
+5. **Regular backups** of both Supabase and Directus databases
+6. **Use object storage** (S3, Spaces, etc.) for Directus files in production
+7. **Configure CORS** properly if Directus and Astro are on different domains
 
 ## Customization
 

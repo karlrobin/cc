@@ -1,37 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getSession } from '../lib/auth';
+import { getPublishedAlbums } from '../lib/directus';
 
 const { user, membership } = await getSession(Astro.cookies);
 const isApproved = membership?.status === 'approved';
 
-// Sample albums data - in production, this would come from a CMS or database
-const albums = [
-  {
-    id: 'summer-2024',
-    title: 'Summer Adventures 2024',
-    date: '2024-08-15',
-    description: 'Our amazing summer vacation in the mountains',
-    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-    photoCount: 4
-  },
-  {
-    id: 'autumn-colors',
-    title: 'Autumn Colors',
-    date: '2024-10-20',
-    description: 'Beautiful fall foliage and cozy moments',
-    coverImage: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop',
-    photoCount: 6
-  },
-  {
-    id: 'city-nights',
-    title: 'City Nights',
-    date: '2024-09-05',
-    description: 'Urban exploration after dark',
-    coverImage: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop',
-    photoCount: 5
-  }
-];
+// Fetch albums from Directus CMS
+const albums = await getPublishedAlbums();
 ---
 
 <Layout title="Photo Albums" user={user} membership={membership}>
@@ -57,21 +33,46 @@ const albums = [
   ) : (
     <>
       <h2 style="margin: 2rem 0 1rem 0;">Photo Albums</h2>
-      <div class="albums-grid">
-        {albums.map(album => (
-          <a href={`/albums/${album.id}`} class="album-card">
-            <img src={album.coverImage} alt={album.title} class="album-card-image" />
-            <div class="album-card-content">
-              <h3>{album.title}</h3>
-              <p class="album-card-date">{new Date(album.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-              <p class="album-card-description">{album.description}</p>
-              <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
-                {album.photoCount} photos
-              </p>
-            </div>
-          </a>
-        ))}
-      </div>
+      {albums.length === 0 ? (
+        <div class="message info">
+          <p>No albums available yet. Check back soon!</p>
+        </div>
+      ) : (
+        <div class="albums-grid">
+          {albums.map(album => {
+            const coverImage = album.cover_image
+              ? `${import.meta.env.PUBLIC_DIRECTUS_URL}/assets/${album.cover_image}`
+              : (album.photos && album.photos.length > 0
+                  ? `${import.meta.env.PUBLIC_DIRECTUS_URL}/assets/${album.photos[0].url}`
+                  : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop');
+
+            const albumDate = album.date_published || album.date_created;
+            const photoCount = album.photos?.length || 0;
+
+            return (
+              <a href={`/albums/${album.slug}`} class="album-card">
+                <img src={coverImage} alt={album.title} class="album-card-image" />
+                <div class="album-card-content">
+                  <h3>{album.title}</h3>
+                  <p class="album-card-date">
+                    {new Date(albumDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                  {album.description && (
+                    <p class="album-card-description">{album.description}</p>
+                  )}
+                  <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
+                    {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+                  </p>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
     </>
   )}
 </Layout>
