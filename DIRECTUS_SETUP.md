@@ -182,6 +182,73 @@ Add these fields to the `albums` collection:
 
 This allows you to see all photos when viewing an album.
 
+### 5. Create the "Memberships" Collection
+
+This collection manages user access to your photo blog.
+
+1. Create a new collection named `memberships`
+2. Add these fields:
+
+| Field Name | Type | Interface | Options |
+|------------|------|-----------|---------|
+| `user_id` | String | Input | Required, Unique |
+| `email` | String | Input | Required, Unique |
+| `status` | String | Dropdown | Options: `pending`, `approved`, `rejected` |
+| `role` | String | Dropdown | Options: `member`, `admin` |
+| `request_message` | Text | Textarea | Optional |
+| `approved_at` | Timestamp | Datetime | Optional |
+
+#### Detailed Field Setup:
+
+**User ID** (from Supabase Auth)
+- Type: String
+- Interface: Input
+- Options:
+  - Required
+  - Unique
+  - This will store the Supabase user ID
+
+**Email**
+- Type: String
+- Interface: Input
+- Options:
+  - Required
+  - Unique
+  - Validation: Email format
+
+**Status**
+- Type: String
+- Interface: Dropdown
+- Options:
+  - Default Value: `pending`
+  - Choices:
+    - `pending` (Pending Review)
+    - `approved` (Approved)
+    - `rejected` (Rejected)
+
+**Role**
+- Type: String
+- Interface: Dropdown
+- Options:
+  - Default Value: `member`
+  - Choices:
+    - `member` (Member)
+    - `admin` (Admin)
+
+**Request Message**
+- Type: Text
+- Interface: Textarea
+- Options:
+  - Optional
+  - User's message when requesting access
+
+**Approved At**
+- Type: Timestamp
+- Interface: Datetime
+- Options:
+  - Optional
+  - Automatically set when status changes to approved
+
 ## Configuring Public Access
 
 To allow the Astro app to read albums without authentication:
@@ -200,18 +267,32 @@ For the `Public` role:
 
 **Albums Collection:**
 - ✅ Read: Custom Access
-  - Status: equals `published`
+  - Filter: Status equals `published`
 - ❌ Create, Update, Delete: No access
 
 **Photos Collection:**
 - ✅ Read: All Access
 - ❌ Create, Update, Delete: No access
 
+**Memberships Collection:**
+- ✅ Create: All Access (allows membership requests)
+- ✅ Read: Custom Access
+  - Filter: User ID equals `$CURRENT_USER` (users can read their own membership)
+- ❌ Update, Delete: No access
+
 **Files (directus_files):**
 - ✅ Read: All Access
 - ❌ Create, Update, Delete: No access
 
-This ensures the public can only read published albums and their photos.
+This ensures:
+- Public can only read published albums and their photos
+- Users can request membership
+- Users can check their own membership status
+- Only admins can approve/reject memberships (via Directus admin UI)
+
+### 3. Admin Permissions
+
+The admin role (created by default in Directus) should have full access to all collections for managing content and memberships.
 
 ## Adding Your First Album
 
@@ -234,6 +315,72 @@ This ensures the public can only read published albums and their photos.
 7. Repeat for all photos
 
 Alternatively, you can add photos directly from the album detail view using the relationship field.
+
+## Managing Memberships
+
+With the hybrid approach, Directus manages all membership data while Supabase handles authentication.
+
+### Reviewing Membership Requests
+
+1. **View Pending Requests**
+   - Go to **Content** → **Memberships**
+   - Filter by Status: `pending`
+   - You'll see all users who have requested access
+
+2. **Approve a Membership**
+   - Click on a membership request
+   - Change **Status** to `approved`
+   - Optionally set **Approved At** to current date
+   - Save
+   - User can now access albums!
+
+3. **Reject a Membership**
+   - Click on a membership request
+   - Change **Status** to `rejected`
+   - Save
+   - User will see they don't have access
+
+### Making Someone an Admin
+
+1. Go to **Content** → **Memberships**
+2. Find the user's membership
+3. Change **Role** to `admin`
+4. Change **Status** to `approved` (if not already)
+5. Save
+
+Admins have the same access as members (they see albums). The `admin` role is mainly used if you want to add admin-specific features later.
+
+### Creating Your First Admin
+
+After setting up Directus:
+
+1. Sign in to your photo blog at least once (this creates your Supabase user)
+2. In Directus, go to **Content** → **Memberships** → **Create Item**
+3. Fill in:
+   - **User ID**: Your Supabase user ID (from Supabase dashboard → Authentication → Users)
+   - **Email**: Your email address
+   - **Status**: `approved`
+   - **Role**: `admin`
+   - **Approved At**: Current date
+4. Save
+
+Now you have full access to the photo blog!
+
+### Viewing All Members
+
+Go to **Content** → **Memberships** to see:
+- All membership requests (pending, approved, rejected)
+- Member roles
+- When they requested access
+- When they were approved
+
+### Batch Operations
+
+You can:
+- Select multiple pending requests
+- Batch approve/reject them
+- Export member lists
+- Filter by status or role
 
 ## File Uploads Configuration
 

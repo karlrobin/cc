@@ -1,4 +1,4 @@
-import { createDirectus, rest, readItems, readItem } from '@directus/sdk';
+import { createDirectus, rest, readItems, readItem, createItem, updateItem } from '@directus/sdk';
 
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 
@@ -26,9 +26,21 @@ export interface Album {
   photos?: Photo[];
 }
 
+export interface Membership {
+  id: string;
+  user_id: string;
+  email: string;
+  status: 'pending' | 'approved' | 'rejected';
+  role: 'member' | 'admin';
+  request_message?: string;
+  approved_at?: string;
+  date_created: string;
+}
+
 interface DirectusSchema {
   albums: Album[];
   photos: Photo[];
+  memberships: Membership[];
 }
 
 // Create Directus client
@@ -83,5 +95,45 @@ export async function getAlbumById(id: string) {
   } catch (error) {
     console.error('Error fetching album:', error);
     return null;
+  }
+}
+
+// Membership functions
+export async function getMembershipByUserId(userId: string) {
+  try {
+    const memberships = await directus.request(
+      readItems('memberships', {
+        filter: {
+          user_id: { _eq: userId }
+        },
+        limit: 1
+      })
+    );
+    return memberships[0] || null;
+  } catch (error) {
+    console.error('Error fetching membership:', error);
+    return null;
+  }
+}
+
+export async function createMembership(data: {
+  user_id: string;
+  email: string;
+  request_message?: string;
+}) {
+  try {
+    const membership = await directus.request(
+      createItem('memberships', {
+        user_id: data.user_id,
+        email: data.email,
+        status: 'pending',
+        role: 'member',
+        request_message: data.request_message || null
+      })
+    );
+    return membership;
+  } catch (error) {
+    console.error('Error creating membership:', error);
+    throw error;
   }
 }

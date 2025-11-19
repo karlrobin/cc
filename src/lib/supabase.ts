@@ -21,14 +21,3 @@ export async function getUser(accessToken: string) {
   if (error) return null;
   return user;
 }
-
-export async function getMembershipStatus(userId: string) {
-  const { data, error } = await supabase
-    .from('memberships')
-    .select('status, role')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) return null;
-  return data;
-}

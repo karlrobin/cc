@@ -1,5 +1,6 @@
 import type { AstroCookies } from 'astro';
-import { supabase, getUser, getMembershipStatus } from './supabase';
+import { getUser } from './supabase';
+import { getMembershipByUserId } from './directus';
 
 export async function getSession(cookies: AstroCookies) {
   const accessToken = cookies.get('sb-access-token')?.value;
@@ -14,7 +15,8 @@ export async function getSession(cookies: AstroCookies) {
     return { user: null, membership: null };
   }
 
-  const membership = await getMembershipStatus(user.id);
+  // Get membership from Directus instead of Supabase
+  const membership = await getMembershipByUserId(user.id);
 
   return { user, membership };
 }

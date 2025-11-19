@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../../lib/supabase';
 import { getSession } from '../../../lib/auth';
+import { getMembershipByUserId, createMembership } from '../../../lib/directus';
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const { user } = await getSession(cookies);
@@ -15,29 +15,21 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
   const message = formData.get('message')?.toString() || '';
 
-  // Check if already has membership record
-  const { data: existing } = await supabase
-    .from('memberships')
-    .select('id, status')
-    .eq('user_id', user.id)
-    .single();
+  // Check if already has membership record in Directus
+  const existing = await getMembershipByUserId(user.id);
 
   if (existing) {
     return redirect('/request-access?error=already_requested');
   }
 
-  // Create membership request
-  const { error } = await supabase
-    .from('memberships')
-    .insert({
+  // Create membership request in Directus
+  try {
+    await createMembership({
       user_id: user.id,
-      email: user.email,
-      status: 'pending',
-      role: 'member',
+      email: user.email!,
       request_message: message
     });
-
-  if (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }

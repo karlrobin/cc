@@ -14,14 +14,29 @@ A beautiful, private photo blog built with Astro, Supabase Auth, and Directus CM
 - ⚡ **Fast** - Server-rendered Astro with minimal JavaScript
 - 📱 **Responsive** - Works beautifully on all devices
 
-## Architecture
+## Architecture (Hybrid Approach)
 
-- **Framework**: Astro (SSR mode with Node adapter)
-- **Authentication**: Supabase Auth (magic links)
-- **User Database**: Supabase PostgreSQL with RLS
-- **Content CMS**: Directus (albums & photos)
-- **Styling**: Vanilla CSS (no framework)
-- **Deployment**: Any Node.js host (Netlify, Vercel, Railway, etc.)
+**Supabase** handles authentication:
+- Magic link emails
+- User authentication & sessions
+- No database tables needed (auth handled automatically)
+
+**Directus CMS** manages all content:
+- Photo albums & photos
+- User memberships (pending/approved/rejected)
+- Single admin interface for everything
+
+**Astro** ties it together:
+- Server-side rendering (SSR)
+- Auth checks via Supabase
+- Content fetching from Directus
+- Minimal client-side JavaScript
+
+This separation gives you:
+- ✅ Best-in-class auth (Supabase specialty)
+- ✅ Beautiful admin UI (Directus specialty)
+- ✅ Single place to manage content AND users
+- ✅ Simple, maintainable architecture
 
 ## Prerequisites
 
@@ -40,24 +55,26 @@ cd astro-photo-blog
 npm install
 ```
 
-### 2. Set Up Supabase
+### 2. Set Up Supabase (Authentication Only)
+
+Supabase is used ONLY for authentication. No database setup needed!
 
 1. Create a new project at [supabase.com](https://supabase.com)
 
-2. In your Supabase dashboard, go to **SQL Editor** and run the schema from `supabase-schema.sql`
-
-3. Configure email templates:
+2. Configure email templates:
    - Go to **Authentication** → **Email Templates**
    - Customize the "Magic Link" template if desired
    - Make sure emails are enabled
 
-4. Get your credentials:
+3. Get your credentials:
    - Go to **Project Settings** → **API**
    - Copy the `URL` and `anon` key
 
+**Note**: You don't need to run any SQL. Supabase Auth tables are created automatically.
+
 ### 3. Set Up Directus CMS
 
-Directus manages your photo albums and content. You can use Directus Cloud or self-host.
+Directus manages your photo albums, photos, AND user memberships. You can use Directus Cloud or self-host.
 
 **Quick Setup (Directus Cloud):**
 1. Sign up at [directus.cloud](https://directus.cloud)
@@ -67,12 +84,15 @@ Directus manages your photo albums and content. You can use Directus Cloud or se
 **Or Self-Host with Docker:**
 See `DIRECTUS_SETUP.md` for detailed instructions.
 
-**Create Collections:**
+**Create Collections (Important!):**
 See the complete guide in `DIRECTUS_SETUP.md` for:
-- Creating `albums` and `photos` collections
+- Creating `albums`, `photos`, and `memberships` collections
 - Setting up relationships
 - Configuring public access permissions
-- Adding your first album
+- Setting up membership workflow
+- Adding your first album and admin user
+
+**This is critical**: The `memberships` collection in Directus stores all user access control.
 
 ### 4. Configure Environment Variables
 
@@ -96,20 +116,28 @@ PUBLIC_DIRECTUS_URL=http://localhost:8055
 PUBLIC_APP_URL=http://localhost:4321
 ```
 
-### 5. Create Your First Admin
+### 5. Create Your First Admin (in Directus)
 
-After running the schema, sign in with your email through the app, then run this SQL in Supabase to make yourself an admin:
+To give yourself access to the photo blog:
 
-```sql
-insert into public.memberships (user_id, email, status, role, approved_at)
-values (
-  (select id from auth.users where email = 'your-email@example.com'),
-  'your-email@example.com',
-  'approved',
-  'admin',
-  now()
-);
-```
+1. **Sign in once** to your photo blog (this creates your Supabase user)
+2. **Get your user ID**:
+   - Go to Supabase dashboard → Authentication → Users
+   - Find your email and copy the UUID
+3. **Create membership in Directus**:
+   - Log in to Directus admin
+   - Go to **Content** → **Memberships** → **Create Item**
+   - Fill in:
+     - User ID: (paste the UUID from Supabase)
+     - Email: your-email@example.com
+     - Status: `approved`
+     - Role: `admin`
+     - Approved At: (current date/time)
+   - Save
+
+Now you can access all albums!
+
+See `DIRECTUS_SETUP.md` for more details on managing memberships.
 
 ### 6. Run Development Server
 
@@ -254,44 +282,61 @@ See `DIRECTUS_SETUP.md` for more details on image optimization.
 
 See the complete Directus setup guide in `DIRECTUS_SETUP.md`.
 
-## Admin Features
+## Admin Features (via Directus)
 
-### Reviewing Membership Requests
+All admin functions are handled through the beautiful **Directus admin UI**. No custom admin pages needed!
 
-Build an admin dashboard by:
+### Managing Memberships
 
-1. Create `src/pages/admin/index.astro`
-2. Query pending memberships:
+**Log in to Directus** and go to **Content** → **Memberships**
 
-```typescript
-const { data: requests } = await supabase
-  .from('memberships')
-  .select('*')
-  .eq('status', 'pending')
-  .order('created_at', { ascending: false });
-```
+**Review Pending Requests:**
+1. Filter by Status: `pending`
+2. Click on a request to see user details and their message
+3. Change Status to `approved` or `rejected`
+4. Save
 
-3. Provide approve/reject buttons that update the membership status
+**Approve Members:**
+- Set Status to `approved`
+- Optionally set Approved At date
+- User can immediately access albums
 
-### Sending Invitations
+**Batch Operations:**
+- Select multiple requests
+- Bulk approve or reject
+- Export member lists
 
-Create an invitation system:
+**Search & Filter:**
+- Filter by status, role, or email
+- Search by email
+- Sort by request date
 
-```typescript
-// Generate invitation token
-const token = crypto.randomUUID();
+See `DIRECTUS_SETUP.md` for detailed membership management instructions.
 
-await supabase
-  .from('invitation_tokens')
-  .insert({
-    email: inviteeEmail,
-    token,
-    invited_by: adminUserId,
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-  });
+### Managing Albums
 
-// Send invitation email with link: /invite?token=...
-```
+All album and photo management happens in Directus:
+
+**Content** → **Albums**:
+- Create/edit/delete albums
+- Set status (draft/published/archived)
+- Manage photos inline
+- Reorder photos
+- Bulk operations
+
+**Content** → **Photos**:
+- Upload multiple photos
+- Add captions
+- Set sort order
+- Replace images
+
+### Admin Best Practices
+
+1. **Regular Reviews**: Check pending memberships weekly
+2. **Communication**: Add notes to membership records
+3. **Backups**: Directus has built-in backup options
+4. **Audit Trail**: Directus tracks all changes
+5. **Access Control**: Limit who has Directus admin access
 
 ## Deployment
 
@@ -331,21 +376,64 @@ Remember to set in production:
 
 ### ✅ What's Secure
 
+**Authentication (Supabase):**
 - **Magic links**: No passwords to steal or leak
-- **HTTP-only cookies**: Tokens not accessible to JavaScript
-- **Row Level Security**: Database enforces access control
-- **Server-side rendering**: Auth checks happen on server
-- **Long sessions**: Users stay logged in without UX friction
+- **HTTP-only cookies**: Auth tokens not accessible to JavaScript
+- **Server-side validation**: All auth checks happen server-side
+- **Long sessions**: Users stay logged in securely
+
+**Content & Memberships (Directus):**
+- **Application-level permissions**: Directus role-based access control
+- **Public role filtering**: Only approved members can read membership status
+- **Admin-only updates**: Only Directus admins can approve memberships
+- **Audit logging**: Directus tracks all changes
+
+**Astro Layer:**
+- **Server-side rendering**: No client-side auth bypass possible
+- **Double validation**: Checks both Supabase auth AND Directus membership
 
 ### 🔒 Production Recommendations
 
 1. **Enable HTTPS** (required for secure cookies)
-2. **Configure email rate limiting** in Supabase
-3. **Review RLS policies** for your use case
-4. **Set up monitoring** for suspicious activity
-5. **Regular backups** of both Supabase and Directus databases
-6. **Use object storage** (S3, Spaces, etc.) for Directus files in production
-7. **Configure CORS** properly if Directus and Astro are on different domains
+2. **Secure Directus admin**:
+   - Strong password for Directus admin account
+   - Enable 2FA if available
+   - Limit admin access to trusted IPs
+3. **Configure Directus permissions carefully**:
+   - Review public role permissions
+   - Ensure memberships are read-only for public
+   - Only admins can approve/reject
+4. **Configure email rate limiting** in Supabase
+5. **Set up monitoring** for suspicious activity
+6. **Regular backups**:
+   - Directus database (includes albums + memberships)
+   - Supabase user data (minimal, just auth)
+7. **Use object storage** (S3, Spaces, etc.) for Directus files in production
+8. **Configure CORS** properly if Directus and Astro are on different domains
+9. **Keep secrets safe**:
+   - Never commit `.env` files
+   - Use environment variables in production
+   - Rotate API keys periodically
+
+### 🤔 Hybrid Architecture Security
+
+The hybrid approach (Supabase for auth, Directus for memberships) is secure for most use cases:
+
+**Trade-offs:**
+- ✅ Easier admin UX (single interface)
+- ✅ Better content management
+- ⚠️ Memberships at application layer (not database RLS)
+- ⚠️ Requires careful Directus permission setup
+
+**When it's secure enough:**
+- Private photo blogs (personal/family)
+- Low-to-medium sensitivity content
+- Trusted admin team
+
+**When to reconsider:**
+- Highly sensitive content
+- Strict compliance requirements
+- Need database-level guarantees
 
 ## Customization
 
