@@ -236,41 +236,63 @@ Admins can send email newsletters to subscribed members about new albums.
 
 **Setup (Required):**
 
-Add Mailgun credentials to your `.env`:
-```env
-MAILGUN_API_KEY=your-mailgun-api-key
-MAILGUN_DOMAIN=mg.yourdomain.com
-MAILGUN_FROM_EMAIL=noreply@mg.yourdomain.com  # Optional
-```
+1. **Add Mailgun credentials** to your `.env`:
+   ```env
+   MAILGUN_API_KEY=your-mailgun-api-key
+   MAILGUN_DOMAIN=mg.yourdomain.com
+   MAILGUN_FROM_EMAIL=noreply@mg.yourdomain.com  # Optional
+   ```
+   Sign up at [mailgun.com](https://www.mailgun.com) for a free account.
 
-Sign up at [mailgun.com](https://www.mailgun.com) for a free account.
+2. **Set up Directus Flow** (see `DIRECTUS_SETUP.md` for detailed instructions):
+   - Create a `newsletters` collection in Directus
+   - Set up a Directus Flow that triggers when newsletter status = `send_now`
+   - Flow calls webhook at `/api/webhooks/newsletter`
 
-**Sending Newsletters:**
+**Composing & Sending Newsletters:**
 
-1. Go to **Admin** → **Newsletter** (in navigation)
-2. Review new albums since last newsletter
-3. See subscriber count
-4. Customize email subject and preview text
-5. Click "Send Newsletter"
+All newsletter composition happens in **Directus**:
+
+1. Click **Admin** link in navigation (opens Directus)
+2. Go to **Content** → **Newsletters**
+3. Click **Create Item**
+4. Fill in:
+   - **Subject**: Email subject line
+   - **Preview Text**: Appears in email client preview (optional)
+   - **Status**: Keep as `draft`
+5. Save the draft
+6. When ready to send, change **Status** to `send_now`
+7. Save again - this triggers the Directus Flow
+8. Newsletter is sent automatically via Mailgun!
+
+**After Sending:**
+
+Check the newsletter record to see:
+- **Status**: Automatically changes to `sent`
+- **Sent At**: Timestamp of when it was sent
+- **Recipient Count**: How many emails were sent
+- **Albums Included**: How many albums were included
+- **Error Message**: Any errors (if applicable)
 
 **How It Works:**
 
-- Tracks last newsletter sent date in Directus
-- Shows only albums published since last send
-- Sends to all members with `newsletter_subscribed: true`
-- Includes one-click unsubscribe link (RFC 8058 compliant)
-- Updates last sent date automatically
-- Uses Mailgun API for reliable delivery
+- Directus Flow watches for status changes
+- When status = `send_now`, triggers webhook
+- Webhook fetches new albums since last newsletter
+- Sends emails to all subscribed members
+- Updates newsletter record with results
+- Tracks last sent date for next newsletter
 
 **Newsletter Features:**
 
-- ✅ Manual sending (you control when)
-- ✅ Preview of new albums before sending
+- ✅ Compose in Directus (beautiful UI)
+- ✅ Automatic sending via Directus Flows
+- ✅ Includes all albums published since last send
 - ✅ HTML email with album images
 - ✅ Plain text fallback
-- ✅ One-click unsubscribe
+- ✅ One-click unsubscribe (RFC 8058 compliant)
 - ✅ Mailgun integration (reliable delivery)
-- ✅ Automatic "new albums since last send" detection
+- ✅ Automatic tracking of sent/received counts
 
 ## Project Structure
 

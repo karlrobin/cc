@@ -305,6 +305,83 @@ This collection stores global settings like the last newsletter sent date.
 3. Leave `last_newsletter_sent` empty initially
 4. Save
 
+### 5. Create the "Newsletters" Collection
+
+This collection allows admins to compose and send newsletters through Directus.
+
+1. Go to **Settings** → **Data Model**
+2. Click **Create Collection**
+3. Name it `newsletters`
+4. Click **Continue**
+
+#### Add Fields to Newsletters Collection:
+
+| Field Name | Type | Interface | Options |
+|------------|------|-----------|---------|
+| `subject` | String | Input | Required |
+| `preview_text` | String | Input | Optional, max 100 chars |
+| `status` | String | Dropdown | Required, default: `draft` |
+| `sent_at` | Timestamp | Datetime | Optional, read-only |
+| `recipient_count` | Integer | Input | Optional, read-only |
+| `albums_included` | Integer | Input | Optional, read-only |
+| `error_message` | Text | Textarea | Optional, read-only |
+
+#### Detailed Field Setup:
+
+**Subject** (email subject line)
+- Type: String
+- Interface: Input
+- Options:
+  - Required
+  - This will be the email subject line
+
+**Preview Text** (email preview text)
+- Type: String
+- Interface: Input
+- Options:
+  - Optional
+  - Max length: 100
+  - Appears in email client previews
+
+**Status** (newsletter workflow)
+- Type: String
+- Interface: Dropdown
+- Options:
+  - Default Value: `draft`
+  - Choices:
+    - `draft` (Draft - not sent)
+    - `send_now` (Send Now - triggers sending)
+    - `sent` (Sent - completed)
+  - **Important**: Set to readonly after sending
+
+**Sent At** (when newsletter was sent)
+- Type: Timestamp
+- Interface: Datetime
+- Options:
+  - Optional
+  - Readonly (automatically set by webhook)
+
+**Recipient Count** (how many emails sent)
+- Type: Integer
+- Interface: Input
+- Options:
+  - Optional
+  - Readonly (automatically set by webhook)
+
+**Albums Included** (number of albums in newsletter)
+- Type: Integer
+- Interface: Input
+- Options:
+  - Optional
+  - Readonly (automatically set by webhook)
+
+**Error Message** (if sending failed)
+- Type: Text
+- Interface: Textarea
+- Options:
+  - Optional
+  - Readonly (automatically set by webhook)
+
 ## Configuring Public Access
 
 To allow the Astro app to read albums without authentication:
@@ -442,6 +519,102 @@ You can:
 - Batch approve/reject them
 - Export member lists
 - Filter by status or role
+
+## Setting Up Newsletter Automation with Directus Flows
+
+Directus Flows allow you to automatically send newsletters when you change their status to "send_now".
+
+### Create the Newsletter Flow
+
+1. **Go to Flows**
+   - Go to **Settings** → **Flows**
+   - Click **Create Flow**
+
+2. **Configure Flow Settings**
+   - Name: `Send Newsletter`
+   - Status: `Active`
+   - Type: Event Hook
+   - Save
+
+3. **Set Up the Trigger**
+   - Click on the trigger node
+   - Event: `items.update`
+   - Collections: Select `newsletters`
+   - Condition: Add a filter
+     - Field: `status`
+     - Operator: `equals`
+     - Value: `send_now`
+   - Save
+
+4. **Add Webhook Operation**
+   - Click the `+` button after the trigger
+   - Operation: `Webhook / Request URL`
+   - Method: `POST`
+   - URL: `{{$env.PUBLIC_APP_URL}}/api/webhooks/newsletter`
+     - Or hardcode your URL: `http://localhost:4321/api/webhooks/newsletter`
+   - Body:
+     ```json
+     {
+       "newsletter_id": "{{$trigger.key}}",
+       "trigger": "send_now"
+     }
+     ```
+   - Headers (optional):
+     ```
+     Content-Type: application/json
+     ```
+   - Save
+
+5. **Test the Flow** (Optional)
+   - You can test by creating a draft newsletter
+   - Change status to `send_now`
+   - Check the Flow logs for results
+
+### How It Works
+
+1. **Admin creates newsletter**
+   - Go to **Content** → **Newsletters**
+   - Click **Create Item**
+   - Fill in subject and preview text
+   - Keep status as `draft`
+   - Save
+
+2. **Review what will be sent**
+   - The newsletter will include all albums published since the last newsletter
+   - You can check **Content** → **Albums** to see what's new
+
+3. **Send the newsletter**
+   - Change **Status** to `send_now`
+   - Save
+   - Directus Flow triggers automatically
+   - Webhook calls your Astro app
+   - Newsletter is sent via Mailgun
+
+4. **Check results**
+   - Status automatically changes to `sent`
+   - `sent_at` shows when it was sent
+   - `recipient_count` shows how many received it
+   - `albums_included` shows how many albums were in it
+   - `error_message` shows if anything went wrong
+
+### Troubleshooting Flows
+
+**Flow not triggering:**
+- Check Flow status is `Active`
+- Verify the condition filter is correct
+- Check Directus Flow logs
+
+**Webhook failing:**
+- Verify `PUBLIC_APP_URL` environment variable is set
+- Check your Astro app is running
+- Look at Astro logs for errors
+- Verify Mailgun credentials are configured
+
+**Emails not sending:**
+- Check Mailgun API credentials in `.env`
+- Verify you have subscribed members
+- Check there are new albums since last send
+- Look at `error_message` field in the newsletter record
 
 ## File Uploads Configuration
 

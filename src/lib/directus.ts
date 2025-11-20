@@ -45,11 +45,25 @@ export interface Settings {
   last_newsletter_sent?: string;
 }
 
+export interface Newsletter {
+  id: string;
+  subject: string;
+  preview_text?: string;
+  status: 'draft' | 'send_now' | 'sent';
+  sent_at?: string;
+  recipient_count?: number;
+  albums_included?: number;
+  error_message?: string;
+  date_created: string;
+  date_updated: string;
+}
+
 interface DirectusSchema {
   albums: Album[];
   photos: Photo[];
   memberships: Membership[];
   settings: Settings[];
+  newsletters: Newsletter[];
 }
 
 // Create Directus client
@@ -255,6 +269,31 @@ export async function updateSettings(data: Partial<Settings>) {
     return settings;
   } catch (error) {
     console.error('Error updating settings:', error);
+    throw error;
+  }
+}
+
+// Newsletter functions
+export async function getNewsletterById(id: string) {
+  try {
+    const newsletter = await directus.request(
+      readItem('newsletters', id)
+    );
+    return newsletter;
+  } catch (error) {
+    console.error('Error fetching newsletter:', error);
+    return null;
+  }
+}
+
+export async function updateNewsletter(id: string, data: Partial<Newsletter>) {
+  try {
+    const newsletter = await directus.request(
+      updateItem('newsletters', id, data)
+    );
+    return newsletter;
+  } catch (error) {
+    console.error('Error updating newsletter:', error);
     throw error;
   }
 }
