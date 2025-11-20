@@ -30,7 +30,12 @@ const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
             {isApproved ? (
               <>
                 <span class="badge approved">Member</span>
-                {membership.role === 'admin' && <a href={directusUrl} target="_blank" rel="noopener">Admin</a>}
+                {membership.role === 'admin' && (
+                  <>
+                    <a href="/admin/newsletter-preview">Newsletter</a>
+                    <a href={directusUrl} target="_blank" rel="noopener">Admin</a>
+                  </>
+                )}
                 <a href="/settings">Settings</a>
               </>
             ) : membership?.status === 'pending' ? (

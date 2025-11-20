@@ -251,19 +251,26 @@ Admins can send email newsletters to subscribed members about new albums.
 
 **Composing & Sending Newsletters:**
 
-All newsletter composition happens in **Directus**:
+1. **Preview what's new** (recommended first step):
+   - Click **Newsletter** link in navigation
+   - See which albums have been published since last newsletter
+   - View subscriber count and suggested subject line
+   - Copy suggested subject for use in Directus
 
-1. Click **Admin** link in navigation (opens Directus)
-2. Go to **Content** → **Newsletters**
-3. Click **Create Item**
-4. Fill in:
-   - **Subject**: Email subject line
-   - **Preview Text**: Appears in email client preview (optional)
-   - **Status**: Keep as `draft`
-5. Save the draft
-6. When ready to send, change **Status** to `send_now`
-7. Save again - this triggers the Directus Flow
-8. Newsletter is sent automatically via Mailgun!
+2. **Compose in Directus**:
+   - Click **Admin** link in navigation (opens Directus)
+   - Go to **Content** → **Newsletters**
+   - Click **Create Item**
+   - Fill in:
+     - **Subject**: Use suggested subject or write your own
+     - **Preview Text**: Appears in email client preview (optional)
+     - **Status**: Keep as `draft`
+   - Save the draft
+
+3. **Send the newsletter**:
+   - When ready, change **Status** to `send_now`
+   - Save again - this triggers the Directus Flow
+   - Newsletter is sent automatically via Mailgun!
 
 **After Sending:**
 
@@ -285,6 +292,8 @@ Check the newsletter record to see:
 
 **Newsletter Features:**
 
+- ✅ Preview page showing what's new before composing
+- ✅ Suggested subject lines based on album titles
 - ✅ Compose in Directus (beautiful UI)
 - ✅ Automatic sending via Directus Flows
 - ✅ Includes all albums published since last send

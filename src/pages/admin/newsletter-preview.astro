@@ -1,0 +1,431 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSession } from '../../lib/auth';
+import { getSettings, getAlbumsSince, getSubscribedMembers } from '../../lib/directus';
+
+const { user, membership } = await getSession(Astro.cookies);
+
+// Redirect if not authenticated
+if (!user) {
+  return Astro.redirect('/signin');
+}
+
+// Redirect if not admin
+if (!membership || membership.status !== 'approved' || membership.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+// Get last newsletter sent date
+const settings = await getSettings();
+const lastSent = settings?.last_newsletter_sent;
+
+// Calculate date for "since last newsletter" or default to 30 days ago
+const sinceDate = lastSent
+  ? new Date(lastSent)
+  : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+
+// Get new albums since last newsletter
+const newAlbums = await getAlbumsSince(sinceDate.toISOString());
+
+// Get subscribed members count
+const subscribers = await getSubscribedMembers();
+
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+
+// Generate suggested subject line
+const suggestedSubject = newAlbums.length > 0
+  ? `New Albums: ${newAlbums.slice(0, 2).map(a => a.title).join(', ')}${newAlbums.length > 2 ? `, and ${newAlbums.length - 2} more` : ''}`
+  : 'Newsletter Preview';
+---
+
+<Layout title="Newsletter Preview" user={user} membership={membership}>
+  <div class="admin-container">
+    <h1>Newsletter Preview</h1>
+    <p class="subtitle">Review what will be included in your next newsletter</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Subscribers</div>
+        <div class="stat-value">{subscribers.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">New Albums</div>
+        <div class="stat-value">{newAlbums.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last Sent</div>
+        <div class="stat-value stat-date">
+          {lastSent
+            ? new Date(lastSent).toLocaleDateString()
+            : 'Never'}
+        </div>
+      </div>
+    </div>
+
+    {newAlbums.length > 0 ? (
+      <>
+        <div class="section">
+          <h2>Albums to Include</h2>
+          <p class="note">
+            These albums were published since {sinceDate.toLocaleDateString()} and will be included in the newsletter.
+          </p>
+
+          <div class="albums-preview">
+            {newAlbums.map(album => {
+              const coverPhoto = album.photos?.[0];
+              const coverUrl = coverPhoto
+                ? `${directusUrl}/assets/${coverPhoto.url}?width=400&quality=80`
+                : '';
+              const photoCount = album.photos?.length || 0;
+              const pubDate = album.date_published || album.date_created;
+
+              return (
+                <div class="album-card">
+                  {coverUrl && (
+                    <img src={coverUrl} alt={album.title} />
+                  )}
+                  <div class="album-info">
+                    <h3>{album.title}</h3>
+                    <p>{album.description || 'No description'}</p>
+                    <p class="meta">
+                      {photoCount} photo{photoCount !== 1 ? 's' : ''} •
+                      Published {new Date(pubDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div class="section action-section">
+          <h2>Ready to Send?</h2>
+
+          <div class="suggested-subject">
+            <label>Suggested Subject Line:</label>
+            <input
+              type="text"
+              value={suggestedSubject}
+              readonly
+              onclick="this.select()"
+            />
+            <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value)" class="btn-copy">
+              Copy
+            </button>
+          </div>
+
+          <div class="instructions">
+            <h3>Next Steps:</h3>
+            <ol>
+              <li>Open <a href={directusUrl} target="_blank" rel="noopener">Directus Admin</a></li>
+              <li>Go to <strong>Content</strong> → <strong>Newsletters</strong></li>
+              <li>Click <strong>Create Item</strong></li>
+              <li>Fill in:
+                <ul>
+                  <li><strong>Subject</strong>: Use the suggested subject above (or write your own)</li>
+                  <li><strong>Preview Text</strong>: e.g., "{newAlbums.length} new photo album{newAlbums.length !== 1 ? 's' : ''} available"</li>
+                  <li><strong>Status</strong>: Keep as "draft"</li>
+                </ul>
+              </li>
+              <li>Save the draft</li>
+              <li>When ready, change <strong>Status</strong> to "send_now"</li>
+              <li>Save again - newsletter will send automatically!</li>
+            </ol>
+          </div>
+
+          <div class="actions">
+            <a href={directusUrl} target="_blank" rel="noopener" class="btn-primary">
+              Open Directus Admin
+            </a>
+            <a href="/" class="btn-secondary">
+              Back to Albums
+            </a>
+          </div>
+        </div>
+      </>
+    ) : (
+      <div class="section no-content">
+        <h2>No New Albums</h2>
+        <p>
+          There are no new albums since the last newsletter{lastSent ? ` (${new Date(lastSent).toLocaleDateString()})` : ''}.
+        </p>
+        <p>Publish some albums first, then return here to create a newsletter.</p>
+        <a href={directusUrl} target="_blank" rel="noopener" class="btn-primary">
+          Open Directus to Add Albums
+        </a>
+      </div>
+    )}
+
+    <div class="section info-section">
+      <h3>ℹ️ About Newsletter Sending</h3>
+      <ul>
+        <li>Newsletters include all albums published since the last send</li>
+        <li>Only sent to members with newsletter subscription enabled ({subscribers.length} currently)</li>
+        <li>Each email includes one-click unsubscribe link</li>
+        <li>After sending, check the newsletter record in Directus for delivery stats</li>
+      </ul>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0066cc;
+  }
+
+  .stat-date {
+    font-size: 1.25rem;
+  }
+
+  .section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .note {
+    color: #666;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .albums-preview {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .album-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+
+  .album-card img {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .album-info {
+    flex: 1;
+  }
+
+  .album-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+  }
+
+  .album-info p {
+    margin: 0.5rem 0;
+    color: #666;
+  }
+
+  .meta {
+    font-size: 0.875rem;
+    color: #999 !important;
+  }
+
+  .action-section {
+    background: #f8f9ff;
+    border-color: #0066cc;
+  }
+
+  .suggested-subject {
+    margin: 1.5rem 0;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .suggested-subject label {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .suggested-subject input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+  }
+
+  .suggested-subject input:focus {
+    outline: 2px solid #0066cc;
+  }
+
+  .btn-copy {
+    padding: 0.75rem 1.5rem;
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-copy:hover {
+    background: #555;
+  }
+
+  .instructions {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 4px;
+  }
+
+  .instructions h3 {
+    margin-top: 0;
+  }
+
+  .instructions ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructions li {
+    margin: 0.75rem 0;
+    line-height: 1.6;
+  }
+
+  .instructions ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructions ul li {
+    margin: 0.25rem 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    display: inline-block;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: #0066cc;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #0052a3;
+  }
+
+  .btn-secondary {
+    background: white;
+    color: #0066cc;
+    border: 1px solid #0066cc;
+  }
+
+  .btn-secondary:hover {
+    background: #f0f7ff;
+  }
+
+  .no-content {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .no-content p {
+    margin: 1rem 0;
+    color: #666;
+  }
+
+  .info-section {
+    background: #fffbf0;
+    border-color: #ffa500;
+  }
+
+  .info-section h3 {
+    margin-top: 0;
+  }
+
+  .info-section ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .info-section li {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  // Copy to clipboard notification
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-copy')) {
+      const btn = e.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 2000);
+    }
+  });
+</script>
+</Layout>
