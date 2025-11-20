@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../../lib/supabase';
+import { createSupabaseServerClient } from '../../../lib/supabase';
 
-export const POST: APIRoute = async ({ request, redirect }) => {
+export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const formData = await request.formData();
   const email = formData.get('email')?.toString();
 
@@ -11,6 +11,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  const supabase = createSupabaseServerClient(cookies);
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

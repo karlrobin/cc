@@ -28,7 +28,7 @@ A beautiful, private photo blog built with Astro, Supabase Auth, and Directus CM
 
 **Astro** ties it together:
 - Server-side rendering (SSR)
-- Auth checks via Supabase
+- Auth checks via Supabase (using `@supabase/ssr` for proper SSR integration)
 - Content fetching from Directus
 - Minimal client-side JavaScript
 
@@ -168,6 +168,7 @@ Open [http://localhost:4321](http://localhost:4321)
    - Tokens stored in HTTP-only cookies (secure)
    - Sessions last up to 1 year
    - Auto-refresh handled by Supabase
+   - Uses `@supabase/ssr` for automatic cookie management
 
 ### Authorization
 

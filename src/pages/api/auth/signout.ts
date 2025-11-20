@@ -1,7 +1,11 @@
 import type { APIRoute } from 'astro';
-import { clearAuthCookies } from '../../../lib/auth';
+import { createSupabaseServerClient } from '../../../lib/supabase';
 
 export const GET: APIRoute = async ({ cookies, redirect }) => {
-  clearAuthCookies(cookies);
+  const supabase = createSupabaseServerClient(cookies);
+
+  // Sign out and clear session cookies automatically
+  await supabase.auth.signOut();
+
   return redirect('/');
 };
