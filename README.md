@@ -13,6 +13,8 @@ A beautiful, private photo blog built with Astro, Supabase Auth, and Directus CM
 - 🛡️ **Secure** - Supabase Auth + Row Level Security
 - ⚡ **Fast** - Server-rendered Astro with minimal JavaScript
 - 📱 **Responsive** - Works beautifully on all devices
+- 📰 **RSS Feed** - Per-user authenticated RSS feeds for album updates
+- 💌 **Newsletter** - Email newsletter system with Mailgun integration
 
 ## Architecture (Hybrid Approach)
 
@@ -114,6 +116,11 @@ PUBLIC_DIRECTUS_URL=http://localhost:8055
 
 # Application URL
 PUBLIC_APP_URL=http://localhost:4321
+
+# Mailgun (for newsletters, optional)
+MAILGUN_API_KEY=your-mailgun-api-key
+MAILGUN_DOMAIN=mg.yourdomain.com
+MAILGUN_FROM_EMAIL=noreply@mg.yourdomain.com  # Optional, defaults to noreply@MAILGUN_DOMAIN
 ```
 
 ### 5. Create Your First Admin (in Directus)
@@ -179,6 +186,91 @@ const isApproved = membership?.status === 'approved';
 ```
 
 Only approved members can view albums.
+
+## RSS Feed
+
+Each approved member gets a personal RSS feed with token-based authentication.
+
+### Accessing Your RSS Feed
+
+1. Sign in to the photo blog
+2. Go to **Settings** (in navigation)
+3. Copy your personal RSS feed URL
+4. Add it to your favorite RSS reader
+
+The RSS feed URL includes a unique token:
+```
+https://your-site.com/rss.xml?token=YOUR-PERSONAL-TOKEN
+```
+
+### Security
+
+- **Per-user tokens**: Each member has a unique RSS token
+- **Revocable**: Tokens can be regenerated if compromised
+- **Authenticated**: Only approved members can access the feed
+- **Private**: Keep your RSS URL secure - don't share it publicly
+
+### What's in the Feed
+
+- All published albums
+- Album titles, descriptions, and cover images
+- Direct links to albums
+- Publish dates
+
+## Newsletter
+
+Admins can send email newsletters to subscribed members about new albums.
+
+### For Members
+
+**Managing Subscription:**
+1. Go to **Settings**
+2. Toggle "Subscribe to newsletter"
+3. Save preference
+
+**Unsubscribing:**
+- Click "Unsubscribe" link in any newsletter email
+- Or disable in Settings
+
+### For Admins
+
+**Setup (Required):**
+
+Add Mailgun credentials to your `.env`:
+```env
+MAILGUN_API_KEY=your-mailgun-api-key
+MAILGUN_DOMAIN=mg.yourdomain.com
+MAILGUN_FROM_EMAIL=noreply@mg.yourdomain.com  # Optional
+```
+
+Sign up at [mailgun.com](https://www.mailgun.com) for a free account.
+
+**Sending Newsletters:**
+
+1. Go to **Admin** → **Newsletter** (in navigation)
+2. Review new albums since last newsletter
+3. See subscriber count
+4. Customize email subject and preview text
+5. Click "Send Newsletter"
+
+**How It Works:**
+
+- Tracks last newsletter sent date in Directus
+- Shows only albums published since last send
+- Sends to all members with `newsletter_subscribed: true`
+- Includes one-click unsubscribe link (RFC 8058 compliant)
+- Updates last sent date automatically
+- Uses Mailgun API for reliable delivery
+
+**Newsletter Features:**
+
+- ✅ Manual sending (you control when)
+- ✅ Preview of new albums before sending
+- ✅ HTML email with album images
+- ✅ Plain text fallback
+- ✅ One-click unsubscribe
+- ✅ Mailgun integration (reliable delivery)
+- ✅ Automatic "new albums since last send" detection
 
 ## Project Structure
 

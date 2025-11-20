@@ -35,12 +35,21 @@ export interface Membership {
   request_message?: string;
   approved_at?: string;
   date_created: string;
+  rss_token?: string;
+  newsletter_subscribed?: boolean;
+  unsubscribe_token?: string;
+}
+
+export interface Settings {
+  id: number;
+  last_newsletter_sent?: string;
 }
 
 interface DirectusSchema {
   albums: Album[];
   photos: Photo[];
   memberships: Membership[];
+  settings: Settings[];
 }
 
 // Create Directus client
@@ -128,12 +137,124 @@ export async function createMembership(data: {
         email: data.email,
         status: 'pending',
         role: 'member',
-        request_message: data.request_message || null
+        request_message: data.request_message || null,
+        newsletter_subscribed: true, // Subscribe by default
+        rss_token: crypto.randomUUID(),
+        unsubscribe_token: crypto.randomUUID()
       })
     );
     return membership;
   } catch (error) {
     console.error('Error creating membership:', error);
+    throw error;
+  }
+}
+
+export async function getMembershipByRssToken(token: string) {
+  try {
+    const memberships = await directus.request(
+      readItems('memberships', {
+        filter: {
+          rss_token: { _eq: token },
+          status: { _eq: 'approved' }
+        },
+        limit: 1
+      })
+    );
+    return memberships[0] || null;
+  } catch (error) {
+    console.error('Error fetching membership by RSS token:', error);
+    return null;
+  }
+}
+
+export async function getMembershipByUnsubscribeToken(token: string) {
+  try {
+    const memberships = await directus.request(
+      readItems('memberships', {
+        filter: {
+          unsubscribe_token: { _eq: token }
+        },
+        limit: 1
+      })
+    );
+    return memberships[0] || null;
+  } catch (error) {
+    console.error('Error fetching membership by unsubscribe token:', error);
+    return null;
+  }
+}
+
+export async function updateMembership(id: string, data: Partial<Membership>) {
+  try {
+    const membership = await directus.request(
+      updateItem('memberships', id, data)
+    );
+    return membership;
+  } catch (error) {
+    console.error('Error updating membership:', error);
+    throw error;
+  }
+}
+
+export async function getSubscribedMembers() {
+  try {
+    const memberships = await directus.request(
+      readItems('memberships', {
+        filter: {
+          status: { _eq: 'approved' },
+          newsletter_subscribed: { _eq: true }
+        }
+      })
+    );
+    return memberships;
+  } catch (error) {
+    console.error('Error fetching subscribed members:', error);
+    return [];
+  }
+}
+
+export async function getAlbumsSince(date: string) {
+  try {
+    const albums = await directus.request(
+      readItems('albums', {
+        filter: {
+          status: { _eq: 'published' },
+          date_published: { _gte: date }
+        },
+        fields: ['*', { photos: ['*'] }],
+        sort: ['-date_published', '-date_created']
+      })
+    );
+    return albums;
+  } catch (error) {
+    console.error('Error fetching albums since date:', error);
+    return [];
+  }
+}
+
+// Settings functions
+export async function getSettings() {
+  try {
+    const settings = await directus.request(
+      readItems('settings', { limit: 1 })
+    );
+    return settings[0] || null;
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    return null;
+  }
+}
+
+export async function updateSettings(data: Partial<Settings>) {
+  try {
+    // Settings collection should have ID 1 (singleton)
+    const settings = await directus.request(
+      updateItem('settings', 1, data)
+    );
+    return settings;
+  } catch (error) {
+    console.error('Error updating settings:', error);
     throw error;
   }
 }

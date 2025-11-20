@@ -249,6 +249,62 @@ This collection manages user access to your photo blog.
   - Optional
   - Automatically set when status changes to approved
 
+**RSS Token** (for authenticated RSS feeds)
+- Type: String (UUID)
+- Interface: Input
+- Options:
+  - Optional
+  - Unique
+  - Automatically generated on membership creation
+  - Used for per-user RSS feed authentication
+
+**Newsletter Subscribed**
+- Type: Boolean
+- Interface: Toggle
+- Options:
+  - Default Value: `true`
+  - Whether user receives newsletter emails
+
+**Unsubscribe Token** (for one-click unsubscribe)
+- Type: String (UUID)
+- Interface: Input
+- Options:
+  - Optional
+  - Unique
+  - Automatically generated on membership creation
+  - Used for newsletter unsubscribe links
+
+### 4. Create the "Settings" Collection (Singleton)
+
+This collection stores global settings like the last newsletter sent date.
+
+1. Go to **Settings** → **Data Model**
+2. Click **Create Collection**
+3. Name it `settings`
+4. Enable **Treat as a single object** (this makes it a singleton)
+5. Click **Continue**
+
+#### Add Fields to Settings Collection:
+
+| Field Name | Type | Interface | Options |
+|------------|------|-----------|---------|
+| `last_newsletter_sent` | Timestamp | Datetime | Optional |
+
+**Last Newsletter Sent**
+- Type: Timestamp
+- Interface: Datetime
+- Options:
+  - Optional
+  - Tracks when the last newsletter was sent
+  - Used to determine which albums are "new"
+
+#### Create Initial Settings Record:
+
+1. Go to **Content** → **Settings**
+2. It should create a single record automatically (singleton)
+3. Leave `last_newsletter_sent` empty initially
+4. Save
+
 ## Configuring Public Access
 
 To allow the Astro app to read albums without authentication:
@@ -284,11 +340,16 @@ For the `Public` role:
 - ✅ Read: All Access
 - ❌ Create, Update, Delete: No access
 
+**Settings Collection:**
+- ✅ Read: All Access (allows reading last newsletter date)
+- ❌ Create, Update, Delete: No access
+
 This ensures:
 - Public can only read published albums and their photos
 - Users can request membership
 - Users can check their own membership status
 - Only admins can approve/reject memberships (via Directus admin UI)
+- Only admins can update settings (like last newsletter sent)
 
 ### 3. Admin Permissions
 

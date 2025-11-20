@@ -27,7 +27,11 @@ const isApproved = membership?.status === 'approved';
           <>
             <span class="user-email">{user.email}</span>
             {isApproved ? (
-              <span class="badge approved">Member</span>
+              <>
+                <span class="badge approved">Member</span>
+                {membership.role === 'admin' && <a href="/admin/newsletter">Admin</a>}
+                <a href="/settings">Settings</a>
+              </>
             ) : membership?.status === 'pending' ? (
               <span class="badge pending">Pending</span>
             ) : (

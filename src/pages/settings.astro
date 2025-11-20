@@ -1,0 +1,173 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSession } from '../lib/auth';
+
+const { user, membership } = await getSession(Astro.cookies);
+
+// Redirect if not authenticated
+if (!user) {
+  return Astro.redirect('/signin');
+}
+
+// Redirect if not approved
+if (!membership || membership.status !== 'approved') {
+  return Astro.redirect('/request-access');
+}
+
+const appUrl = import.meta.env.PUBLIC_APP_URL || Astro.url.origin;
+const rssUrl = membership.rss_token
+  ? `${appUrl}/rss.xml?token=${membership.rss_token}`
+  : null;
+---
+
+<Layout title="Settings">
+  <div class="container">
+    <h1>Settings</h1>
+
+    <div class="settings-section">
+      <h2>RSS Feed</h2>
+      <p>Subscribe to new albums using your personal RSS feed.</p>
+
+      {rssUrl ? (
+        <div class="rss-token">
+          <label for="rss-url">Your RSS Feed URL:</label>
+          <input
+            type="text"
+            id="rss-url"
+            value={rssUrl}
+            readonly
+            onclick="this.select()"
+          />
+          <p class="note">
+            ⚠️ Keep this URL private! Anyone with this link can access your feed.
+            Use it in your favorite RSS reader app.
+          </p>
+        </div>
+      ) : (
+        <p class="error">RSS token not available. Please contact an administrator.</p>
+      )}
+    </div>
+
+    <div class="settings-section">
+      <h2>Newsletter</h2>
+      <p>Receive email updates when new albums are posted.</p>
+
+      <form method="POST" action="/api/settings/newsletter">
+        <label>
+          <input
+            type="checkbox"
+            name="subscribed"
+            checked={membership.newsletter_subscribed}
+          />
+          Subscribe to newsletter
+        </label>
+        <button type="submit">Save Newsletter Preference</button>
+      </form>
+
+      <p class="note">
+        You can unsubscribe at any time using the link in any newsletter email.
+      </p>
+    </div>
+
+    <div class="settings-section">
+      <h2>Account</h2>
+      <p><strong>Email:</strong> {user.email}</p>
+      <p><strong>Member since:</strong> {new Date(membership.date_created).toLocaleDateString()}</p>
+      {membership.role === 'admin' && <p><strong>Role:</strong> Administrator</p>}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    margin-bottom: 2rem;
+  }
+
+  .settings-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .settings-section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+
+  .rss-token {
+    margin-top: 1rem;
+  }
+
+  .rss-token label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .rss-token input {
+    width: 100%;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.875rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f5f5f5;
+    cursor: pointer;
+  }
+
+  .rss-token input:focus {
+    outline: 2px solid #0066cc;
+    background: white;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  .error {
+    color: #d00;
+  }
+
+  form {
+    margin-top: 1rem;
+  }
+
+  form label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+
+  form input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+  }
+
+  button {
+    padding: 0.75rem 1.5rem;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #0052a3;
+  }
+</style>
