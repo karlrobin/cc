@@ -78,7 +78,7 @@ export async function getPublishedAlbums() {
           status: { _eq: 'published' }
         },
         fields: ['*', { photos: ['*'] }],
-        sort: ['-date_published', '-date_created']
+        sort: ['-date_published']
       })
     );
     return albums;
@@ -237,7 +237,7 @@ export async function getAlbumsSince(date: string) {
           date_published: { _gte: date }
         },
         fields: ['*', { photos: ['*'] }],
-        sort: ['-date_published', '-date_created']
+        sort: ['-date_published']
       })
     );
     return albums;
