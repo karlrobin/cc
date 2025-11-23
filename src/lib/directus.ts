@@ -126,6 +126,7 @@ export async function getAlbumById(id: string) {
 // Membership functions
 export async function getMembershipByUserId(userId: string) {
   try {
+    console.log('Looking for membership with user_id:', userId);
     const memberships = await directus.request(
       readItems('memberships', {
         filter: {
@@ -134,6 +135,7 @@ export async function getMembershipByUserId(userId: string) {
         limit: 1
       })
     );
+    console.log('Found membership:', memberships[0] ? 'yes' : 'no');
     return memberships[0] || null;
   } catch (error) {
     console.error('Error fetching membership:', error);
