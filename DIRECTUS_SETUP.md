@@ -436,14 +436,13 @@ The admin role (created by default in Directus) should have full access to all c
 
 For server-side operations like sending newsletters, the Astro app needs an admin token:
 
-1. Go to **Settings** → **Access Tokens**
-2. Click **Create Token**
-3. Fill in:
-   - **Name**: `Astro Newsletter Service`
-   - **Role**: Select your admin role
-   - **Permissions**: Admin (full access)
-4. Copy the generated token
-5. Add to your `.env` file:
+1. In Directus, click **User Directory** (👤 icon) in the sidebar
+2. Click on your **admin user** (the one you log in with)
+3. Scroll down to the **Token** field
+4. Click the **plus (+) button** next to the Token field to generate a new token
+5. **Copy the generated token immediately** (save it somewhere safe!)
+6. Click **Save** to activate the token
+7. Add to your `.env` file:
    ```
    DIRECTUS_ADMIN_TOKEN=your-generated-token
    ```
@@ -452,6 +451,8 @@ This token is used for:
 - Updating settings (like last newsletter sent date)
 - Updating newsletter status after sending
 - Other server-side operations that require admin permissions
+
+**Note**: Each user can have one static token that doesn't expire. If you need to regenerate it, simply click the plus button again to create a new one.
 
 ⚠️ **Security Note**: Keep this token secret! Never commit it to version control or expose it in client-side code.
 
