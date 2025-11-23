@@ -8,6 +8,10 @@ export default defineConfig({
     mode: 'standalone'
   }),
   vite: {
+    server: {
+      // Allow requests from Docker containers via host.docker.internal
+      allowedHosts: ['host.docker.internal']
+    },
     ssr: {
       external: ['@supabase/supabase-js']
     }
