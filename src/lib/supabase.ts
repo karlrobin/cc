@@ -21,11 +21,12 @@ export function createSupabaseServerClient(cookies: AstroCookies) {
       set(name: string, value: string, options: CookieOptions) {
         cookies.set(name, value, {
           ...options,
-          // Ensure cookies work in SSR
           path: '/',
           sameSite: 'lax',
           httpOnly: true,
-          secure: true,
+          // Only use secure cookies in production (HTTPS)
+          // In development (HTTP), secure cookies won't work
+          secure: import.meta.env.PROD,
         });
       },
       remove(name: string, options: CookieOptions) {
