@@ -432,6 +432,29 @@ This ensures:
 
 The admin role (created by default in Directus) should have full access to all collections for managing content and memberships.
 
+### 4. Create Admin Access Token
+
+For server-side operations like sending newsletters, the Astro app needs an admin token:
+
+1. Go to **Settings** → **Access Tokens**
+2. Click **Create Token**
+3. Fill in:
+   - **Name**: `Astro Newsletter Service`
+   - **Role**: Select your admin role
+   - **Permissions**: Admin (full access)
+4. Copy the generated token
+5. Add to your `.env` file:
+   ```
+   DIRECTUS_ADMIN_TOKEN=your-generated-token
+   ```
+
+This token is used for:
+- Updating settings (like last newsletter sent date)
+- Updating newsletter status after sending
+- Other server-side operations that require admin permissions
+
+⚠️ **Security Note**: Keep this token secret! Never commit it to version control or expose it in client-side code.
+
 ## Adding Your First Album
 
 1. Go to **Content** → **Albums**

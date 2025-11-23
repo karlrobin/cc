@@ -1,6 +1,7 @@
-import { createDirectus, rest, readItems, readItem, createItem, updateItem } from '@directus/sdk';
+import { createDirectus, rest, staticToken, readItems, readItem, createItem, updateItem } from '@directus/sdk';
 
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
+const adminToken = import.meta.env.DIRECTUS_ADMIN_TOKEN;
 
 if (!directusUrl) {
   throw new Error('Missing PUBLIC_DIRECTUS_URL environment variable');
@@ -66,8 +67,14 @@ interface DirectusSchema {
   newsletters: Newsletter[];
 }
 
-// Create Directus client
+// Create public Directus client (unauthenticated, for reading public data)
 export const directus = createDirectus<DirectusSchema>(directusUrl).with(rest());
+
+// Create authenticated Directus client (for admin operations)
+// Only initialize if admin token is available
+const directusAdmin = adminToken
+  ? createDirectus<DirectusSchema>(directusUrl).with(staticToken(adminToken)).with(rest())
+  : null;
 
 // Helper functions for fetching albums
 export async function getPublishedAlbums() {
@@ -266,13 +273,17 @@ export async function getSettings() {
 
 export async function updateSettings(data: Partial<Settings>) {
   try {
+    if (!directusAdmin) {
+      throw new Error('DIRECTUS_ADMIN_TOKEN is required for updating settings');
+    }
+
     // Get the current settings to find the actual ID
     const currentSettings = await getSettings();
     if (!currentSettings) {
       throw new Error('No settings record found');
     }
 
-    const settings = await directus.request(
+    const settings = await directusAdmin.request(
       updateItem('settings', currentSettings.id, data)
     );
     return settings;
@@ -297,7 +308,11 @@ export async function getNewsletterById(id: string) {
 
 export async function updateNewsletter(id: string, data: Partial<Newsletter>) {
   try {
-    const newsletter = await directus.request(
+    if (!directusAdmin) {
+      throw new Error('DIRECTUS_ADMIN_TOKEN is required for updating newsletters');
+    }
+
+    const newsletter = await directusAdmin.request(
       updateItem('newsletters', id, data)
     );
     return newsletter;

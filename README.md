@@ -600,6 +600,27 @@ Ideas to extend:
 - Check user has membership record
 - Verify membership status is 'approved'
 
+### Newsletter sending fails
+
+**"Mailgun API error: Forbidden"**
+- Verify `MAILGUN_API_KEY` is correct (should start with `key-`)
+- Check that `MAILGUN_DOMAIN` is verified in your Mailgun dashboard
+- Ensure the domain is authorized for sending in Mailgun
+- For sandbox domains, recipient must be authorized in Mailgun
+
+**"No settings record found"**
+- Ensure you've created the `settings` collection in Directus
+- Add at least one settings record in Directus
+- Verify Public role has Read access to settings collection
+- Check `DIRECTUS_ADMIN_TOKEN` is set in `.env` file
+- Verify the admin token has proper permissions in Directus
+
+**Newsletter webhook not triggering**
+- Check Directus Flow is properly configured (see `DIRECTUS_SETUP.md`)
+- Verify webhook URL matches your app URL
+- Check Directus logs for Flow execution errors
+- Ensure Docker container can reach your app (may need `host.docker.internal`)
+
 ## License
 
 MIT

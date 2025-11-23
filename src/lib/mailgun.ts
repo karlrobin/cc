@@ -59,7 +59,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Mailgun API error:', error);
+      console.error(`Mailgun API error (${response.status} ${response.statusText}):`, error);
+      console.error('Troubleshooting:');
+      console.error('- Check that MAILGUN_API_KEY is correct');
+      console.error('- Verify MAILGUN_DOMAIN is authorized in your Mailgun account');
+      console.error('- Ensure domain is verified (check Mailgun dashboard)');
       return false;
     }
 
