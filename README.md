@@ -238,11 +238,14 @@ Admins can send email newsletters to subscribed members about new albums.
 
 1. **Add Mailgun credentials** to your `.env`:
    ```env
-   MAILGUN_API_KEY=your-mailgun-api-key
+   MAILGUN_API_KEY=your-mailgun-private-api-key
    MAILGUN_DOMAIN=mg.yourdomain.com
    MAILGUN_FROM_EMAIL=noreply@mg.yourdomain.com  # Optional
+   MAILGUN_REGION=eu  # 'eu' for EU accounts, 'us' for US accounts (default: us)
    ```
    Sign up at [mailgun.com](https://www.mailgun.com) for a free account.
+
+   **Important:** Use your **Private API key** (starts with `key-`), not the domain sending key. For EU accounts, set `MAILGUN_REGION=eu`.
 
 2. **Set up Directus Flow** (see `DIRECTUS_SETUP.md` for detailed instructions):
    - Create a `newsletters` collection in Directus
@@ -602,11 +605,12 @@ Ideas to extend:
 
 ### Newsletter sending fails
 
-**"Mailgun API error: Forbidden"**
-- Verify `MAILGUN_API_KEY` is correct (should start with `key-`)
+**"Mailgun API error: Forbidden" or emails not sending**
+- Use your **Private API key** (starts with `key-`), not domain sending key
 - Check that `MAILGUN_DOMAIN` is verified in your Mailgun dashboard
-- Ensure the domain is authorized for sending in Mailgun
+- **EU accounts:** Set `MAILGUN_REGION=eu` in your `.env` file
 - For sandbox domains, recipient must be authorized in Mailgun
+- Verify domain is active and not in test mode
 
 **"No settings record found"**
 - Ensure you've created the `settings` collection in Directus

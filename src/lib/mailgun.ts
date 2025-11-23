@@ -3,10 +3,13 @@
  *
  * Uses Mailgun's REST API to send transactional emails.
  * Requires MAILGUN_API_KEY and MAILGUN_DOMAIN environment variables.
+ *
+ * For EU region accounts, set MAILGUN_REGION=eu
  */
 
 const MAILGUN_API_KEY = import.meta.env.MAILGUN_API_KEY;
 const MAILGUN_DOMAIN = import.meta.env.MAILGUN_DOMAIN;
+const MAILGUN_REGION = import.meta.env.MAILGUN_REGION || 'us'; // 'us' or 'eu'
 const FROM_EMAIL = import.meta.env.MAILGUN_FROM_EMAIL || `noreply@${MAILGUN_DOMAIN}`;
 
 if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
@@ -30,7 +33,13 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     return false;
   }
 
-  const url = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`;
+  // Use EU endpoint for EU region accounts
+  const apiEndpoint = MAILGUN_REGION === 'eu'
+    ? 'api.eu.mailgun.net'
+    : 'api.mailgun.net';
+  const url = `https://${apiEndpoint}/v3/${MAILGUN_DOMAIN}/messages`;
+
+  console.log(`Sending email via Mailgun ${MAILGUN_REGION.toUpperCase()} region to:`, options.to);
 
   const formData = new FormData();
   formData.append('from', FROM_EMAIL);
