@@ -266,9 +266,14 @@ export async function getSettings() {
 
 export async function updateSettings(data: Partial<Settings>) {
   try {
-    // Settings collection should have ID 1 (singleton)
+    // Get the current settings to find the actual ID
+    const currentSettings = await getSettings();
+    if (!currentSettings) {
+      throw new Error('No settings record found');
+    }
+
     const settings = await directus.request(
-      updateItem('settings', 1, data)
+      updateItem('settings', currentSettings.id, data)
     );
     return settings;
   } catch (error) {
