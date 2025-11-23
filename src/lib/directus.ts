@@ -1,4 +1,4 @@
-import { createDirectus, rest, staticToken, readItems, readItem, createItem, updateItem } from '@directus/sdk';
+import { createDirectus, rest, staticToken, readItems, readItem, createItem, updateItem, readSingleton, updateSingleton } from '@directus/sdk';
 
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL;
 const adminToken = import.meta.env.DIRECTUS_ADMIN_TOKEN;
@@ -42,7 +42,7 @@ export interface Membership {
 }
 
 export interface Settings {
-  id: number;
+  id?: number; // Optional: singletons may or may not have an ID
   last_newsletter_sent?: string;
 }
 
@@ -262,9 +262,9 @@ export async function getAlbumsSince(date: string) {
 export async function getSettings() {
   try {
     const settings = await directus.request(
-      readItems('settings', { limit: 1 })
+      readSingleton('settings')
     );
-    return settings[0] || null;
+    return settings || null;
   } catch (error) {
     console.error('Error fetching settings:', error);
     return null;
@@ -277,14 +277,9 @@ export async function updateSettings(data: Partial<Settings>) {
       throw new Error('DIRECTUS_ADMIN_TOKEN is required for updating settings');
     }
 
-    // Get the current settings to find the actual ID
-    const currentSettings = await getSettings();
-    if (!currentSettings) {
-      throw new Error('No settings record found');
-    }
-
+    // Settings is a singleton, so we can update it directly without fetching ID
     const settings = await directusAdmin.request(
-      updateItem('settings', currentSettings.id, data)
+      updateSingleton('settings', data)
     );
     return settings;
   } catch (error) {

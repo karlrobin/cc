@@ -9,7 +9,7 @@
  * - MAILGUN_DOMAIN
  */
 
-import { createDirectus, rest, staticToken, readItems } from '@directus/sdk';
+import { createDirectus, rest, staticToken, readItems, readSingleton, updateSingleton } from '@directus/sdk';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -44,20 +44,18 @@ console.log('\n2. Testing Directus Connection (Public):');
 const directus = createDirectus(directusUrl).with(rest());
 
 try {
-  const settings = await directus.request(readItems('settings', { limit: 1 }));
-  if (settings && settings.length > 0) {
-    console.log(`   ✅ Settings collection found (ID: ${settings[0].id})`);
-    console.log(`   Last newsletter sent: ${settings[0].last_newsletter_sent || 'Never'}`);
+  const settings = await directus.request(readSingleton('settings'));
+  if (settings) {
+    console.log('   ✅ Settings singleton found!');
+    console.log(`   Last newsletter sent: ${settings.last_newsletter_sent || 'Never'}`);
   } else {
-    console.log('   ❌ Settings collection exists but has no records!');
-    console.log('   → Create a settings record in Directus:');
-    console.log('      1. Go to Content → Settings');
-    console.log('      2. Click "Create Item"');
-    console.log('      3. Save (you can leave fields empty)');
+    console.log('   ❌ Settings singleton not found!');
+    console.log('   → Make sure the settings collection is configured as a singleton in Directus');
   }
 } catch (error) {
   console.log('   ❌ Failed to fetch settings:', error.message);
-  console.log('   → Make sure Public role has Read access to settings collection');
+  console.log('   → Make sure Public role has Read access to settings singleton');
+  console.log('   → Verify settings is configured as a singleton in Directus');
 }
 
 // Check 3: Test Directus connection (authenticated)
@@ -65,25 +63,24 @@ console.log('\n3. Testing Directus Admin Authentication:');
 const directusAdmin = createDirectus(directusUrl).with(staticToken(adminToken)).with(rest());
 
 try {
-  const settings = await directusAdmin.request(readItems('settings', { limit: 1 }));
-  if (settings && settings.length > 0) {
-    console.log('   ✅ Admin token works! Can read settings.');
+  const settings = await directusAdmin.request(readSingleton('settings'));
+  if (settings) {
+    console.log('   ✅ Admin token works! Can read settings singleton.');
 
-    // Try to update settings (dry run)
+    // Try to update settings (test write permissions)
     try {
-      await directusAdmin.request({
-        method: 'PATCH',
-        path: `/items/settings/${settings[0].id}`,
-        body: JSON.stringify({ last_newsletter_sent: new Date().toISOString() })
-      });
-      console.log('   ✅ Admin token can update settings!');
+      const testDate = new Date().toISOString();
+      await directusAdmin.request(
+        updateSingleton('settings', { last_newsletter_sent: testDate })
+      );
+      console.log('   ✅ Admin token can update settings singleton!');
     } catch (updateError) {
       console.log('   ❌ Admin token cannot update settings:', updateError.message);
       console.log('   → Check that your admin user has full permissions');
     }
   } else {
-    console.log('   ❌ No settings records found (even with admin token)');
-    console.log('   → Create a settings record in Directus first');
+    console.log('   ❌ Settings singleton not found (even with admin token)');
+    console.log('   → Make sure settings singleton is properly configured in Directus');
   }
 } catch (error) {
   console.log('   ❌ Admin authentication failed:', error.message);
