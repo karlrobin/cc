@@ -78,6 +78,8 @@ export async function getPublishedAlbums() {
           status: { _eq: 'published' }
         },
         fields: ['*', { photos: ['*'] }],
+        // Sort by date_published (when first published)
+        // If you want republished albums to appear at top, use date_updated instead
         sort: ['-date_published']
       })
     );
