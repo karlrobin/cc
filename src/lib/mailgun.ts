@@ -41,19 +41,20 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   console.log(`Sending email via Mailgun ${MAILGUN_REGION.toUpperCase()} region to:`, options.to);
 
-  const formData = new FormData();
-  formData.append('from', FROM_EMAIL);
-  formData.append('to', options.to);
-  formData.append('subject', options.subject);
-  formData.append('html', options.html);
+  // Use URLSearchParams for application/x-www-form-urlencoded encoding
+  const params = new URLSearchParams();
+  params.append('from', FROM_EMAIL);
+  params.append('to', options.to);
+  params.append('subject', options.subject);
+  params.append('html', options.html);
   if (options.text) {
-    formData.append('text', options.text);
+    params.append('text', options.text);
   }
 
   // Add custom headers
   if (options.headers) {
     for (const [key, value] of Object.entries(options.headers)) {
-      formData.append(`h:${key}`, value);
+      params.append(`h:${key}`, value);
     }
   }
 
@@ -61,9 +62,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`
+        'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: formData
+      body: params.toString()
     });
 
     if (!response.ok) {
@@ -76,6 +78,8 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       return false;
     }
 
+    const result = await response.json();
+    console.log('✅ Email sent successfully:', result.id);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
