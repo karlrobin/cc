@@ -148,10 +148,6 @@ Admins can email newsletters about new albums to subscribed members using Mailgu
 └── package.json
 ```
 
-## Content Management
-
-Albums, photos, and memberships are managed through the Directus admin UI. See `DIRECTUS_SETUP.md` for complete instructions on creating albums, adding photos, and managing member access.
-
 ## Deployment
 
 Build and deploy to any Node.js hosting platform:
@@ -178,26 +174,6 @@ Set these environment variables in production:
 - **Directus permissions**: Role-based access control with audit logging
 
 **Production checklist**: Enable HTTPS, secure Directus admin with strong password/2FA, review Directus public role permissions, configure email rate limiting in Supabase, use object storage for files, and never commit `.env` files.
-
-## Customization
-
-- **Styling**: Edit `src/styles/global.css`
-- **Email templates**: Customize in Supabase Dashboard → Authentication → Email Templates
-- **Extend**: Add comments, social sharing, photo reactions, or download features
-
-## Troubleshooting
-
-### Magic links not working
-- Check Supabase email settings and verify `PUBLIC_APP_URL` matches your domain
-- Check spam folder and review Supabase logs
-
-### "Not authenticated" errors
-- Clear cookies and sign in again
-- Check environment variables are set correctly
-
-### Permission errors
-- Check Directus public role permissions (see `DIRECTUS_SETUP.md`)
-- Verify user has an approved membership record in Directus
 
 ## License
 
